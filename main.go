@@ -358,7 +358,7 @@ func main() {
 		sineTable = append(sineTable, uint8(math.Round((math.Sin((2*math.Pi*float64(i))/float64(len))+1)*127.5)))
 	}
 	Context = Kurumi.ConstructSynth()
-	// glob.Context = Context
+	Kurumi.SynthContext = Context
 	fmt.Printf("%v", Context)
 	wnd := g.NewMasterWindow("Kurumi 3 : The ultimate wavetable tool", 1280, 720, 0)
 	wnd.Run(loop)

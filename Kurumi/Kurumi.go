@@ -32,6 +32,8 @@ type Synth struct {
 	Gain      float64
 }
 
+var SynthContext *Synth
+
 func ConstructSynth() *Synth {
 	context := &Synth{WaveLen: 32, WaveHei: 32, MacLen: 64, Macro: 0, SmoothWin: 1, Gain: 1.0}
 	context.ModMatrix = [][]bool{
@@ -85,10 +87,8 @@ func (op *Operator) getPhase() float64 {
 	if op.PhaseMod {
 		myPhaseMod = 1.0
 	}
-	macro := 0
-	macLen := 0
-	// macro := m.Context.Macro
-	// macLen := m.Context.MacLen
+	macro := SynthContext.Macro
+	macLen := SynthContext.MacLen
 	pRev := 1.0
 	if op.PhaseRev {
 		pRev = -1.0
