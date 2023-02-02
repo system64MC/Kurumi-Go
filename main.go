@@ -7,10 +7,11 @@ import (
 	"math"
 
 	g "github.com/AllenDang/giu"
-	glob "system64.net/KurumiGo/model/Globals"
+	// glob "system64.net/KurumiGo/model/Globals"
 
 	// op "system64.net/KurumiGo/model/Operator"
-	synth "system64.net/KurumiGo/model/Synth"
+	"system64.net/KurumiGo/Kurumi"
+	// synth "system64.net/KurumiGo/Kurumi/Kurumi"
 )
 
 var (
@@ -36,7 +37,7 @@ var myLen int32 = 1
 var myHei int32 = 1
 
 var sineTable = make([]uint8, 0)
-var Context *synth.Synth
+var Context *Kurumi.Synth
 
 var myString = "Temporary string"
 
@@ -116,8 +117,8 @@ func loop() {
 					),
 					g.Column(
 						g.Label("Waveform :"),
-						g.Combo("Waveform", op.Waveforms[Context.Operators[0].WaveformId], op.Waveforms, &Context.Operators[0].WaveformId).Size(256),
-						g.Style().SetDisabled(Context.Operators[0].WaveformId < int32(len(op.Waveforms)-1)).To(
+						g.Combo("Waveform", Kurumi.Waveforms[Context.Operators[0].WaveformId], Kurumi.Waveforms, &Context.Operators[0].WaveformId).Size(256),
+						g.Style().SetDisabled(Context.Operators[0].WaveformId < int32(len(Kurumi.Waveforms)-1)).To(
 							g.Table().Size(256, 64).Rows(
 								g.TableRow(
 									g.Custom(
@@ -356,8 +357,8 @@ func main() {
 	for i := 0; i < len; i++ {
 		sineTable = append(sineTable, uint8(math.Round((math.Sin((2*math.Pi*float64(i))/float64(len))+1)*127.5)))
 	}
-	Context = synth.ConstructSynth()
-	glob.Context = Context
+	Context = Kurumi.ConstructSynth()
+	// glob.Context = Context
 	fmt.Printf("%v", Context)
 	wnd := g.NewMasterWindow("Kurumi 3 : The ultimate wavetable tool", 1280, 720, 0)
 	wnd.Run(loop)
