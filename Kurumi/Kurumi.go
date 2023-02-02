@@ -76,8 +76,14 @@ func ConstructSynth() *Synth {
 
 /*------------------------------------------------*/
 
-var WaveFuncs = []func(*Operator, float64) float64{
-	func(op *Operator, x float64) float64 {
+// var WaveFuncs = []func(*Operator, float64) float64{
+// 	func(op *Operator, x float64) float64 {
+// 		return math.Sin(x*float64(op.Mult)*2*math.Pi) + (float64(op.Phase)*2*math.Pi + (op.getPhase() * math.Pi * 2))
+// 	},
+// }
+
+var WaveFuncs = []func(*Operator)(float64) float64{
+	func(op *Operator)(float64) float64 {
 		return math.Sin(x*float64(op.Mult)*2*math.Pi) + (float64(op.Phase)*2*math.Pi + (op.getPhase() * math.Pi * 2))
 	},
 }
