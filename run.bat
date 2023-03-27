@@ -1,0 +1,1 @@
+go run -tags static main.go
