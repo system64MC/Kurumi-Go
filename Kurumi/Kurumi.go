@@ -4,8 +4,6 @@ package kurumi
 // void Wavetable(void *userdata, Uint8 *stream, int len);
 import "C"
 import (
-	// "fmt"
-	// "fmt"
 	"os"
 	"math"
 	"strconv"
@@ -18,8 +16,6 @@ import (
 
 	"github.com/veandco/go-sdl2/sdl"
 )
-
-// import "system64.net/KurumiGo/model/Operator"
 
 type Adsr struct {
 	Start   float32
@@ -195,9 +191,6 @@ func getWTSample(op *Operator, x float64) float64 {
 		a := interpolate(x * float64(len(op.Wavetable)) * float64(op.Mult) + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
 		b := interpolate(x * float64(len(op.MorphWave)) * float64(op.Mult) + (float64(op.Phase) * float64(len(op.MorphWave)) + op.getPhase() * float64(len(op.MorphWave))), op, op.MorphWave)
 		c := float64(SynthContext.Macro) / float64(op.MorphTime)
-		// if(SynthContext.Macro > op.MorphTime) {
-		// 	c = 1.0
-		// }
 		return lerp(a, b, c)
 	}
 	return interpolate(x * float64(len(op.Wavetable)) * float64(op.Mult) + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
@@ -272,21 +265,6 @@ func interpolate(x float64, op *Operator, wt []uint8) float64 {
 	return noInterpolation(x, wt)
 }
 
-// func interpolate(x float64, op *Operator) float64 {
-// 	wt := op.Wavetable
-// 	switch op.Interpolation {
-// 	case 0:
-// 		return noInterpolation(x, wt)
-// 	case 1:
-// 		return linearInterpolation(x, wt)
-// 	case 2:
-// 		return cosineInterpolation(x, wt)
-// 	case 3:
-// 		return cubicInterpolation(x, wt)
-// 	}
-// 	return noInterpolation(x, wt)
-// }
-
 var CopiedOp *Operator = nil
 
 func CopyOp(op *Operator) {
@@ -326,12 +304,6 @@ func PasteOp(op *Operator) {
 }
 /*------------------------------------------------*/
 
-// var WaveFuncs = []func(*Operator, float64) float64{
-// 	func(op *Operator, x float64) float64 {
-// 		return math.Sin(x*float64(op.Mult)*2*math.Pi) + (float64(op.Phase)*2*math.Pi + (op.getPhase() * math.Pi * 2))
-// 	},
-// }
-
 func sine(op *Operator, x float64) float64 {
 	return math.Sin((x * float64(op.Mult) * 2 * math.Pi) + (float64(op.Phase)*2*math.Pi + (op.getPhase() * math.Pi * 2)))
 }
@@ -359,13 +331,6 @@ func squishedRectSine(op *Operator, x float64) float64 {
 func squishedAbsSine(op *Operator, x float64) float64 {
 	return math.Abs(squishedSine(op, x))
 }
-
-// func square(op *Operator, x float64) float64 {
-// 	if math.Signbit(sine(op, x)) {
-// 		return -1
-// 	}
-// 	return 1
-// }
 
 func square(op *Operator, x float64) float64 {
 	width := op.getDutyCycle()
@@ -457,7 +422,6 @@ func quarterTriangle(op *Operator, x float64) float64 {
 func squishedTriangle(op *Operator, x float64) float64 {
 	if sine(op, x) > 0 {
 		return math.Asin(math.Sin((x * float64(op.Mult) * 4 * math.Pi)   + (float64(op.Phase) * math.Pi * 4 + (op.getPhase() * math.Pi * 4)) ))/ (math.Pi/2)
-		// return math.Asin(math.Sin((x * float64(op.Mult) * 4 * math.Pi) + (float64(op.Phase)*math.Pi*4+(op.getPhase()*math.Pi*4))/(math.Pi/2)))
 	}
 	return 0
 }
@@ -623,10 +587,6 @@ var Interpolations = []string{
 var volROM = [...]float64 {0.0, 0.00390625, 0.0078125, 0.01171875, 0.015625, 0.01953125, 0.0234375, 0.02734375, 0.03125, 0.03515625, 0.0390625, 0.04296875, 0.046875, 0.05078125, 0.0546875, 0.05859375, 0.0625, 0.06640625, 0.0703125, 0.07421875, 0.078125, 0.08203125, 0.0859375, 0.08984375, 0.09375, 0.09765625, 0.1015625, 0.10546875, 0.109375, 0.11328125, 0.1171875, 0.12109375, 0.125, 0.12890625, 0.1328125, 0.13671875, 0.140625, 0.14453125, 0.1484375, 0.15234375, 0.15625, 0.16015625, 0.1640625, 0.16796875, 0.171875, 0.17578125, 0.1796875, 0.18359375, 0.1875, 0.19140625, 0.1953125, 0.19921875, 0.203125, 0.20703125, 0.2109375, 0.21484375, 0.21875, 0.22265625, 0.2265625, 0.23046875, 0.234375, 0.23828125, 0.2421875, 0.24609375, 0.25, 0.25390625, 0.2578125, 0.26171875, 0.265625, 0.26953125, 0.2734375, 0.27734375, 0.28125, 0.28515625, 0.2890625, 0.29296875, 0.296875, 0.30078125, 0.3046875, 0.30859375, 0.3125, 0.31640625, 0.3203125, 0.32421875, 0.328125, 0.33203125, 0.3359375, 0.33984375, 0.34375, 0.34765625, 0.3515625, 0.35546875, 0.359375, 0.36328125, 0.3671875, 0.37109375, 0.375, 0.37890625, 0.3828125, 0.38671875, 0.390625, 0.39453125, 0.3984375, 0.40234375, 0.40625, 0.41015625, 0.4140625, 0.41796875, 0.421875, 0.42578125, 0.4296875, 0.43359375, 0.4375, 0.44140625, 0.4453125, 0.44921875, 0.453125, 0.45703125, 0.4609375, 0.46484375, 0.46875, 0.47265625, 0.4765625, 0.48046875, 0.484375, 0.48828125, 0.4921875, 0.49609375, 0.5, 0.50390625, 0.5078125, 0.51171875, 0.515625, 0.51953125, 0.5234375, 0.52734375, 0.53125, 0.53515625, 0.5390625, 0.54296875, 0.546875, 0.55078125, 0.5546875, 0.55859375, 0.5625, 0.56640625, 0.5703125, 0.57421875, 0.578125, 0.58203125, 0.5859375, 0.58984375, 0.59375, 0.59765625, 0.6015625, 0.60546875, 0.609375, 0.61328125, 0.6171875, 0.62109375, 0.625, 0.62890625, 0.6328125, 0.63671875, 0.640625, 0.64453125, 0.6484375, 0.65234375, 0.65625, 0.66015625, 0.6640625, 0.66796875, 0.671875, 0.67578125, 0.6796875, 0.68359375, 0.6875, 0.69140625, 0.6953125, 0.69921875, 0.703125, 0.70703125, 0.7109375, 0.71484375, 0.71875, 0.72265625, 0.7265625, 0.73046875, 0.734375, 0.73828125, 0.7421875, 0.74609375, 0.75, 0.75390625, 0.7578125, 0.76171875, 0.765625, 0.76953125, 0.7734375, 0.77734375, 0.78125, 0.78515625, 0.7890625, 0.79296875, 0.796875, 0.80078125, 0.8046875, 0.80859375, 0.8125, 0.81640625, 0.8203125, 0.82421875, 0.828125, 0.83203125, 0.8359375, 0.83984375, 0.84375, 0.84765625, 0.8515625, 0.85546875, 0.859375, 0.86328125, 0.8671875, 0.87109375, 0.875, 0.87890625, 0.8828125, 0.88671875, 0.890625, 0.89453125, 0.8984375, 0.90234375, 0.90625, 0.91015625, 0.9140625, 0.91796875, 0.921875, 0.92578125, 0.9296875, 0.93359375, 0.9375, 0.94140625, 0.9453125, 0.94921875, 0.953125, 0.95703125, 0.9609375, 0.96484375, 0.96875, 0.97265625, 0.9765625, 0.98046875, 0.984375, 0.98828125, 0.9921875, 1}
 
 func (op *Operator) getPhase() float64 {
-	// myPhaseMod := 0.0
-	// if op.PhaseMod {
-	// 	myPhaseMod = 1.0
-	// }
 	macro := SynthContext.Macro
 	macLen := SynthContext.MacLen
 
@@ -634,10 +594,7 @@ func (op *Operator) getPhase() float64 {
 	if(macLen == 1) {
 		macLen = 2
 	}
-	// pRev := 1.0
-	// if op.PhaseRev {
-	// 	pRev = -1.0
-	// }
+
 	// Put custom phase env here
 	
 	return (float64(macro) / float64(macLen-1)) * float64(op.Detune)
@@ -669,7 +626,6 @@ func ApplyStringToWaveform(opId int,str string, destination Dest) {
 	if len(bArr) == 0 {
 		bArr = append(bArr, 0)
 	}
-	// fmt.Printf("%v", strArr)
 
 	switch destination {
 	case 0:
@@ -756,9 +712,7 @@ func fm(x float64) float64 {
 			}
 		}
 		samples[op] = logicMod(x, sum, op)
-		// SynthContext.Operators[op].Prev = SynthContext.Operators[op].Curr
 		SynthContext.Operators[op].Prev = float32(samples[op])
-		// SynthContext.Operators[op].Curr = float32(samples[op])
 	}
 	output := 0.0
 	for o := 0; o < 4; o++ {
@@ -778,9 +732,7 @@ func fm2(x float64) float64 {
 			}
 		}
 		samples[op] = logicMod(x, sum, op)
-		// SynthContext.Operators[op].Prev = SynthContext.Operators[op].Curr
 		SynthContext.Operators[op].Prev = float32(samples[op])
-		// SynthContext.Operators[op].Curr = float32(samples[op])
 	}
 	output := 0.0
 	for o := 0; o < 4; o++ {
@@ -819,13 +771,9 @@ func Synthesize() {
 	for x := 0; x < int(myLen*oversample); x++ {
 		myTmp[x] = (fm(float64(x)))
 	}
-	// myTmp = lowpassFiltering(float64(SynthContext.Cutoff), float64(SynthContext.Resonance), float64(SynthContext.SampleRate), myTmp)
 	if(SynthContext.FilterEnabled) {
 		myTmp = filter(myTmp)
 	}
-	// lowpassFiltering(cutoffFrequency float64, resonance float64, sampleRate float64, input []float64)
-	// myTmp = lowpassFiltering(float64(SynthContext.Cutoff), float64(SynthContext.Resonance), float64(SynthContext.SampleRate), myTmp)
-	// myTmp = lowpassFiltering(myTmp, float64(len(myTmp)), 440, 1, 1)
 
 	myTmp = smooth(myTmp)
 
@@ -848,7 +796,6 @@ func Synthesize() {
 		tmp := int(math.Round((res + 1) * (float64(SynthContext.WaveHei) / 2.0)))
 		myOut = append(myOut, tmp)
 	}
-	// fmt.Printf("%v", myOut)
 	WaveOutput = myOut
 }
 
@@ -912,26 +859,16 @@ func Resample(input []float64, outputLength int) []float64 {
 
 
 func Synthesize22() {
-	// ResetFB()
 	WaveOutput = make([]int, 0)
-	// myLen := int(SynthContext.WaveLen)
-	// oversample := int(SynthContext.Oversample)
 	myTmp := make([]float64, 65536)
 	for x := 0; x < int(65536); x++ {
 		myTmp[x] = fm(float64(x))
 	}
-	// lowpassFiltering(cutoffFrequency float64, resonance float64, sampleRate float64, input []float64)
-	// myTmp = lowpassFiltering(float64(SynthContext.Cutoff), float64(SynthContext.Resonance), float64(SynthContext.SampleRate), myTmp)
-	// myTmp = lowpassFiltering(myTmp, float64(len(myTmp)), 440, 1, 1)
-
-	// myTmp = smooth(myTmp)
 
 	for x := 0; x < len(myTmp); x++ {
 		myTmp[x] = ClampF64(-1, myTmp[x] * float64(SynthContext.Gain), 1)
-		// println(myTmp[x])
 	}
 
-	// downsampled := Resample(myTmp, int(SynthContext.WaveLen))
 	downsampled := downsampleWaveTableLinear(myTmp, int(SynthContext.WaveLen))
 	myOut := make([]int, 0)
 
@@ -941,18 +878,6 @@ func Synthesize22() {
 		tmp := int(math.Round((res + 1) * (float64(SynthContext.WaveHei) / 2.0)))
 		myOut = append(myOut, tmp)
 	}
-
-	// tmpLen := len(myTmp)
-	// for c := 0; c < tmpLen; c += oversample {
-	// 	res := 0.0
-	// 	for i := 0; i < oversample; i++ {
-	// 		res += myTmp[c+i]
-	// 	}
-	// 	res = res / float64(oversample)
-	// 	tmp := int(math.Round((res + 1) * (float64(SynthContext.WaveHei) / 2.0)))
-	// 	myOut = append(myOut, tmp)
-	// }
-	// fmt.Printf("%v", myOut)
 	WaveOutput = myOut
 }
 
@@ -1041,18 +966,11 @@ func (op *Operator) oscillate(x float64) float64 {
 
 }
 
-// func (op *Operator) getFB() float64 {
-// 	return float64(op.Feedback) * (float64(op.Prev) / float64(6*op.Mult))
-// }
-
 func (op *Operator) getFB() float64 {
-	// return float64(op.Feedback) * (float64(op.Prev + op.Curr) / float64(op.Mult))
 	return float64(op.Feedback) * (float64(op.Prev) / float64(6*op.Mult))
-	// return float64(op.Feedback) * (float64(op.Prev))
 }
 
 func (op *Operator) getFB3() float64 {
-	// return float64(op.Feedback) * (float64(op.Prev + op.Curr) / float64(op.Mult))
 	return float64(op.Feedback) * (float64(op.Prev) / float64(op.Mult / (SynthContext.WaveLen * SynthContext.Oversample)))
 }
 
@@ -1060,7 +978,6 @@ func (op *Operator) getVolume() float64 {
 	if(!op.IsEnvelopeEnabled) {
 		return float64(op.Tl)
 	}
-	// TODO implement custom env
 	if op.UseCustomVolEnv {
 		return op.customEnv()
 	}
@@ -1072,39 +989,8 @@ func (op *Operator) customEnv() float64 {
 	return (float64(op.Tl) * (volROM[op.VolEnv[index] & 0b11111111]))
 }
 
-// func (op *Operator) adsr() float64 {
-// 	macro := SynthContext.Macro
-// 	macLen := SynthContext.MacLen
-// 	// Attack
-// 	if macro <= op.Adsr.Attack {
-// 		if op.Adsr.Attack <= 0 {
-// 			return float64(op.Tl)
-// 		}
-// 		step := float64(op.Tl) / float64(op.Adsr.Attack)
-// 		if float64(macro)*step-float64(macLen) >= float64(op.Tl) {
-// 			return float64(op.Tl)
-// 		}
-// 		return float64(macro) * step
-// 	}
-
-// 	// Decay and Sustain
-// 	if macro > op.Adsr.Attack {
-// 		if op.Adsr.Decay <= 0 {
-// 			return float64(op.Adsr.Sustain)
-// 		}
-// 		tick := float64(macro-op.Adsr.Attack) / float64(op.Adsr.Decay)
-// 		decVal := float64(op.Adsr.Sustain-op.Tl)*tick + float64(op.Tl)
-// 		if decVal < float64(op.Adsr.Sustain) {
-// 			return float64(op.Adsr.Sustain)
-// 		}
-// 		return decVal
-// 	}
-// 	return 1.0
-// }
-
 func (op *Operator) adsr() float64 {
 	macro := SynthContext.Macro
-	//macLen := SynthContext.MacLen
 	// Attack
 	if macro <= op.Adsr.Attack {
 		if op.Adsr.Attack <= 0 {
@@ -1125,7 +1011,6 @@ func (op *Operator) adsr() float64 {
 
 func (op *Operator) pwmAdsr() float64 {
 	macro := SynthContext.Macro
-	//macLen := SynthContext.MacLen
 	// Attack
 	if macro <= op.PwmAdsr.Attack {
 		if op.PwmAdsr.Attack <= 0 {
@@ -1159,7 +1044,6 @@ func LinearInterpolation(x1 float64, y1 float64, x2 float64, y2 float64, x float
 
 func adsrFilter() float64 {
 	macro := SynthContext.Macro
-	//macLen := SynthContext.MacLen
 	// Attack
 	if macro <= SynthContext.FilterAttack {
 		if SynthContext.FilterAttack <= 0 {
@@ -1302,93 +1186,6 @@ func GenerateWaveSeqStr() {
 	WaveSeqStr = str
 }
 
-// type FilterType int
-
-// const (
-//     LowpassFilter FilterType = iota
-//     HighpassFilter
-//     BandpassFilter
-// )
-
-// type LowpassFilter struct {
-//     fs float64 // sampling frequency
-//     f0 float64 // cutoff frequency
-//     q  float64 // Q factor
-//     g  float64 // filter gain
-//     r  float64 // resonance
-//     x1 float64 // input sample delay line (z^-1)
-//     x2 float64 // input sample delay line (z^-2)
-//     y1 float64 // output sample delay line (z^-1)
-//     y2 float64 // output sample delay line (z^-2)
-//     b0 float64 // numerator coefficient b0
-//     b1 float64 // numerator coefficient b1
-//     b2 float64 // numerator coefficient b2
-//     a1 float64 // denominator coefficient a1
-//     a2 float64 // denominator coefficient a2
-// }
-
-// // NewLowpassFilter creates a new lowpass filter with the specified parameters
-// // func NewLowpassFilter(fs, f0, q, g, r float64) *LowpassFilter {
-// //     w0 := 2 * math.Pi * f0 / fs
-// //     alpha := math.Sin(w0) / (2 * q)
-// //     a := (g * math.Pow(alpha, 2)) + (math.Sqrt(2*g)*alpha) + 1
-// //     b0 := ((g * (1 + r)) * math.Pow(alpha, 2)) / a
-// //     b1 := (2 * g * (1 + r) * math.Pow(alpha, 2)) / a
-// //     b2 := ((g * (1 + r)) * math.Pow(alpha, 2)) / a
-// //     a1 := (2 * (math.Pow(alpha, 2) - g)) / a
-// //     a2 := (g * math.Pow(alpha, 2) - (math.Sqrt(2*g)*alpha) + 1) / a
-// //     return &LowpassFilter{
-// //         fs: fs,
-// //         f0: f0,
-// //         q:  q,
-// //         g:  g,
-// //         r:  r,
-// //         b0: b0,
-// //         b1: b1,
-// //         b2: b2,
-// //         a1: a1,
-// //         a2: a2,
-// //     }
-// // }
-
-// func NewLowpassFilter(fs, cutoffFreq, q, g, r float64) *LowpassFilter {
-//     w0 := 2 * math.Pi * cutoffFreq / fs
-//     alpha := math.Sin(w0) / (2 * q)
-//     cosw0 := math.Cos(w0)
-//     a := 1 + alpha/g
-//     b0 := (1 - cosw0) / 2 / a
-//     b1 := (1 - cosw0) / a
-//     b2 := (1 - cosw0) / 2 / a
-//     a1 := (-2 * cosw0) / a
-//     a2 := (1 - alpha/g) / a
-//     return &LowpassFilter{
-//         fs: fs,
-//         f0: cutoffFreq,
-//         q:  q,
-//         g:  g,
-//         r:  r,
-//         b0: b0,
-//         b1: b1,
-//         b2: b2,
-//         a1: a1,
-//         a2: a2,
-//     }
-// }
-
-
-// // Process filters a sample through the lowpass filter
-// func (lpf *LowpassFilter) Process(x float64) float64 {
-//     y := (lpf.b0 * x) + (lpf.b1 * lpf.x1) + (lpf.b2 * lpf.x2) - (lpf.a1 * lpf.y1) - (lpf.a2 * lpf.y2)
-//     lpf.x2 = lpf.x1
-//     lpf.x1 = x
-//     lpf.y2 = lpf.y1
-//     lpf.y1 = y
-//     return y
-// }
-
-
-
-
 type LowpassFilter struct {
     sampleRate float64
     cutoffFreq float64
@@ -1450,23 +1247,6 @@ func (lpf *LowpassFilter) Process(x float64) float64 {
 
     return lpf.y[0] * lpf.gain
 }
-
-
-
-// func lowpassFiltering(wavetable []float64, sampleRate, cutoffFreq, resonance, gain float64) []float64 {
-//     // Create filter
-//     filter := NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain)
-    
-//     // Create output wavetable
-//     output := make([]float64, len(wavetable))
-    
-//     // Filter wavetable
-//     for i := 0; i < len(wavetable); i++ {
-//         output[i] = filter.Process(wavetable[i])
-//     }
-    
-//     return output
-// }
 
 func lowpassFiltering222(cutoffFreq float64, resonance float64, sampleRate float64, input []float64) []float64 {
 	gain := 1.0
@@ -1536,7 +1316,6 @@ func lowpassFiltering(cutoff float64, resonance float64, pitch float64, wavetabl
 
 func lowpassFiltering2(cutoffFrequency float64, resonance float64, sampleRate float64, input []float64) []float64 {
     // Calculate filter coefficients
-    // tmp := float64(len(input)) / sampleRate
 	sampleRate = float64(len(input)) * sampleRate
 	
 	omegaC := 2.0 * math.Pi * cutoffFrequency / sampleRate
@@ -1564,161 +1343,6 @@ func lowpassFiltering2(cutoffFrequency float64, resonance float64, sampleRate fl
 
     return output
 }
-
-
-
-
-// LowpassFilter filters a wavetable with a lowpass filter
-// func lowpassFiltering3(wavetable []float64, sampleRate float64, cutoffFreq float64, resonance float64, q float64, gain float64) []float64 {
-//     lpf := NewLowpassFilter(sampleRate, cutoffFreq, q, gain, resonance)
-//     output := make([]float64, len(wavetable))
-//     for i, x := range wavetable {
-//         // Apply lowpass filter to sample
-//         y := lpf.Process(x)
-
-//         // Store filtered sample in output array
-//         output[i] = y
-//     }
-// 	for i, x := range wavetable {
-//         // Apply lowpass filter to sample
-//         y := lpf.Process(x)
-
-//         // Store filtered sample in output array
-//         output[i] = y
-//     }
-// 	for i, x := range wavetable {
-//         // Apply lowpass filter to sample
-//         y := lpf.Process(x)
-
-//         // Store filtered sample in output array
-//         output[i] = y
-//     }
-// 	for i, x := range wavetable {
-//         // Apply lowpass filter to sample
-//         y := lpf.Process(x)
-
-//         // Store filtered sample in output array
-//         output[i] = y
-//     }
-//     return output
-
-	
-	
-// }
-
-// func lowpassFiltering(wavetable []float64, sampleRate, cutoffFreq, resonance, gain float64) []float64 {
-//     lpf := NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain)
-
-//     output := make([]float64, len(wavetable))
-//     for i, x := range wavetable {
-//         y := lpf.Process(x)
-//         output[i] = y
-//     }
-
-//     return output
-// }
-
-
-
-
-// func lowpassFiltering22(wavetable []float64, sampleRate float64, cutoffFreq float64, resonance float64, q float64, gain float64) []float64 {
-//     lpf := NewLowpassFilter(sampleRate, cutoffFreq, q, gain, resonance)
-//     lpf2 := NewLowpassFilter(sampleRate, cutoffFreq, q, gain, resonance)
-//     output1 := make([]float64, len(wavetable))
-//     output2 := make([]float64, len(wavetable))
-    
-//     // Apply lowpass filter to wavetable forward
-//     for i, x := range wavetable {
-//         y := lpf.Process(x)
-//         output1[i] = y
-//     }
-    
-//     // Apply lowpass filter to output1 backward
-//     for i := len(output1) - 1; i >= 0; i-- {
-//         x := output1[i]
-//         y := lpf2.Process(x)
-//         output2[i] = y
-//     }
-    
-//     // Average the filtered wavetables to cancel out the phase shift
-//     output := make([]float64, len(wavetable))
-//     for i := range wavetable {
-//         output[i] = (output1[i] + output2[i]) / 2
-//     }
-    
-//     return output
-// }
-
-
-
-// func lowpassFiltering2(wavetable []float64, sampleRate float64, cutoffFreq float64, resonance float64, q float64, gain float64) []float64 {
-//     lpf := NewLowpassFilter(sampleRate, cutoffFreq, q, gain, resonance)
-//     lpf2 := NewLowpassFilter(sampleRate, cutoffFreq, q, gain, resonance)
-//     output1 := make([]float64, len(wavetable))
-//     output2 := make([]float64, len(wavetable))
-    
-//     // Apply lowpass filter to wavetable forward
-//     for i, x := range wavetable {
-//         y := lpf.Process(x)
-//         output1[i] = y
-//     }
-// 	for i, x := range wavetable {
-//         y := lpf.Process(x)
-//         output1[i] = y
-//     }
-    
-//     // Apply lowpass filter to wavetable backward
-//     for i := len(wavetable) - 1; i >= 0; i-- {
-//         x := wavetable[i]
-//         y := lpf2.Process(x)
-//         output2[i] = y
-//     }
-// 	for i := len(wavetable) - 1; i >= 0; i-- {
-//         x := wavetable[i]
-//         y := lpf2.Process(x)
-//         output2[i] = y
-//     }
-    
-//     // Average the filtered wavetables to cancel out the phase shift
-//     output := make([]float64, len(wavetable))
-//     for i := range wavetable {
-//         output[i] = (output1[i] + output2[i]) / 2
-//     }
-    
-//     return output
-// }
-
-// func lowpassFiltering1(wavetable []float64, sampleRate float64, cutoffFreq float64, resonance float64, q float64, gain float64) []float64 {
-//     lpf := NewLowpassFilter(sampleRate, cutoffFreq * float64(len(wavetable) * 2), q, gain, resonance)
-//     output := make([]float64, len(wavetable))
-
-//     // Scale the filter coefficients by the length of the wavetable
-//     lengthScale := 1.0 / float64(len(wavetable))
-//     lpf.b0 *= lengthScale
-//     lpf.b1 *= lengthScale
-//     lpf.b2 *= lengthScale
-
-//     for i, x := range wavetable {
-//         // Apply lowpass filter to sample
-//         y := lpf.Process(x)
-
-//         // Store filtered sample in output array
-//         output[i] = y
-//     }
-//     return output
-// }
-
-
-
-
-// func lowpassFiltering(wavetable []float64, sampleRate float64, cutoffFreq float64, resonance float64, q float64, gain float64) []float64 {
-// 	filter := NewLowpassFilter(sampleRate, cutoffFreq*2.0/float64(len(wavetable)), resonance, q, gain)
-// 	output := make([]float64, len(wavetable))
-// 	for i := range wavetable {
-// 		output[i] = filter.Process(wavetable[i])
-// 	}
-// 	return output
-// }
 
 func notetofreq(n float64) float64 {
 	return 440 * math.Pow(2, (n-69)/12)
@@ -1851,97 +1475,6 @@ var FilterTypes = []string {
 	"Biquad Allpass",
 }
 
-
-
-// func createWav(path string, macro bool, bits16 bool) error {
-// 	file, err := os.Create(path)
-// 	var bufLen int
-//     if macro {
-//         bufLen = len(WaveOutput) * int(SynthContext.MacLen)
-//     } else {
-//         bufLen = len(WaveOutput)
-//     }
-
-// 	var bits int16 = 8
-// 	if(bits16) {
-// 		bits = 16
-// 	}
-
-//     intBuffer := []int16{
-//         0x4952, 0x4646, int16((2*bufLen + 15) & 0x0000ffff),
-//         int16(((2*bufLen + 15) & 0xffff0000) >> 16), 
-// 		0x4157, 
-// 		0x4556, 
-// 		0x6d66,
-//         0x2074, 
-// 		0x0012, 
-// 		0x0000, 
-// 		0x0001, 
-// 		0x0001, 
-// 		int16(getSampleRate() & 0x0000ffff),
-//         int16((getSampleRate() & 0xffff0000) >> 16), 
-// 		int16((2*0x0001*getSampleRate()) & 0x0000ffff),
-//         int16(((2*0x0001*getSampleRate()) & 0xffff0000) >> 16), 
-// 		0x0004, 
-// 		bits, // 16-bits
-// 		0x0000, 
-// 		0x6164,
-//         0x6174, 
-// 		int16((2*bufLen) & 0x0000ffff), 
-// 		int16(((2*bufLen) & 0xffff0000) >> 16),
-//     }
-
-//     var output []int16
-//     if macro {
-//         tmpMac := SynthContext.Macro
-//         for i := 0; i < int(SynthContext.MacLen); i++ {
-//             SynthContext.Macro = int32(i)
-//             ResetFB()
-// 			Synthesize()
-// 			Synthesize()
-//             for _, sample := range WaveOutput {
-//                 var tmp float64
-//                 if (SynthContext.WaveHei & 0x0001) == 1 {
-//                     tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
-//                 } else {
-//                     tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
-//                 }
-//                 output = append(output, int16(math.Round((tmp-1)*float64((1<<(16-1))-1))))
-//             }
-//         }
-// 		SynthContext.Macro = tmpMac
-// 		ResetFB()
-// 		Synthesize()
-// 		Synthesize()
-//     } else {
-//         for _, sample := range WaveOutput {
-//             var tmp float64
-//             if (SynthContext.WaveHei & 0x0001) == 1 {
-//                 tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
-//             } else {
-//                 tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
-//             }
-//             output = append(output, int16(math.Round((tmp-1)*float64((1<<(16-1))-1))))
-//         }
-//     }
-
-//     for _, sample := range output {
-//         intBuffer = append(intBuffer, sample)
-//     }
-
-//     var out []byte
-//     for _, sample := range intBuffer {
-//         out = append(out, byte(sample&0xff), byte(sample>>8))
-//     }
-
-//     i, err := file.Write(out)
-// 	i = int(i)
-//     if err != nil {
-//         return err
-//     }
-//     return nil
-// }
-
 func CreateFTIN163(macro bool) error {
 	tmpLen := SynthContext.WaveLen
 	tmpHei := SynthContext.WaveHei
@@ -1974,8 +1507,6 @@ func CreateFTIN163(macro bool) error {
 	if (len(name) > 127) {
 		name = name[:127]
 	}
-	//var size uint32 = 1 + 4 + 4 + 4 +uint32(4 * len(WaveOutput)) 
-	//const HEADER_SIZE = 16 + 2 + 2 + 4 + 4 + 1 + 4 + 4 + 4
 
 	// It's time to build the FUW file!!
 	output := []byte {
@@ -2097,8 +1628,7 @@ func CreateFUW() error {
         fpath += ".fuw"
     }
 	file, err := os.Create(fpath)
-	// name := path.Base(fpath)
-	// name = name[:len(name)-len(path.Ext(fpath))]
+
 	var size uint32 = 1 + 4 + 4 + 4 +uint32(4 * len(WaveOutput)) 
 	const HEADER_SIZE = 16 + 2 + 2 + 4 + 4 + 1 + 4 + 4 + 4
 
@@ -2251,11 +1781,6 @@ intBuffer := []byte{
     for _, sample := range output {
         intBuffer = append(intBuffer, sample)
     }
-
-    // var out []byte
-    // for _, sample := range intBuffer {
-    //     out = append(out, byte(sample&0xff), byte(sample>>8))
-    // }
 
     i, err := file.Write(intBuffer)
 	i = int(i)
@@ -2453,8 +1978,6 @@ func Wavetable(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	n := int(length)
 	hdr := reflect.SliceHeader{Data: uintptr(unsafe.Pointer(stream)), Len: n, Cap: n}
 	buf := *(*[]C.Uint8)(unsafe.Pointer(&hdr))
-	// var myWave = make([]int, len(WaveOutput))
-	// copy(myWave, WaveOutput)
 	
 	for i := 0; i < n; i ++ {
 		sample := 0.0
@@ -2476,7 +1999,6 @@ func InitAudio() {
 		println(err)
 		return
 	}
-	// defer sdl.Quit()
 
 	spec := &sdl.AudioSpec{
 		Freq:     sampleHz,
