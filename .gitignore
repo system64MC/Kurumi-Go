@@ -1,0 +1,14 @@
+### Above combination will ignore all files without extension ###
+
+# Ignore files with extension `.class` & `.exe`
+*.class
+*.exe
+
+# Ignore `bin` dir
+bin/
+backup/
+# or
+*/bin/*
+
+# Unignore all `.exe` in `bin` dir
+!*/bin/*.exe
