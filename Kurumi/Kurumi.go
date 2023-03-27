@@ -1754,7 +1754,7 @@ func buildBQFilter(cutoff float64) *biquadFilter {
 			filter.b2 = 0
 		} else {
 			filter.b2 = (1 - K / float64(SynthContext.Resonance) + K * K) * norm
-		}
+		} 
 	case 1: // HPF BQ
 	if SynthContext.Resonance == 0 {
 			norm = 0
