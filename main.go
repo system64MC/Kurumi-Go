@@ -68,7 +68,7 @@ func loop() {
 				g.MenuItem("Furnace Wavetable").OnClick(func ()  {
 					kurumi.CreateFUW()
 				}),
-				g.Menu("DN-FamiTracker").Layout(
+				g.Menu("Dn-FamiTracker").Layout(
 					g.MenuItem("Export FTI (N163)").OnClick(
 						func() {
 							kurumi.CreateFTIN163(false)
@@ -788,7 +788,7 @@ func buildOperator(a int) *g.TabItemWidget {
 
 				g.Row(g.Label("")),
 
-				g.Checkbox("Use enveloppe on volume", &Context.Operators[opId].IsEnvelopeEnabled).OnChange(func() {
+				g.Checkbox("Use envelope on volume", &Context.Operators[opId].IsEnvelopeEnabled).OnChange(func() {
 					
 					kurumi.Synthesize()
 				}),
