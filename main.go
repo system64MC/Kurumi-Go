@@ -1247,5 +1247,5 @@ func main() {
 	// }
 
 	wnd.Run(loop)
-	// openbrowser("https://www.youtube.com/watch?v=xvFZjo5PgG0
+	// openbrowser("https://www.youtube.com/watch?v=xvFZjo5PgG0")
 }

@@ -1980,8 +1980,12 @@ func Wavetable(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	buf := *(*[]C.Uint8)(unsafe.Pointer(&hdr))
 	
 	for i := 0; i < n; i ++ {
-		sample := 0.0
+		sample := 128.0
 		ind := 0
+		if(!SynthContext.SongPlaying) {
+			buf[i] = 128
+			continue
+		}
 		if(SynthContext.SongPlaying && len(WaveOutput) > 0 && WaveOutput != nil){
 			ind = int(phaseAcc(len(WaveOutput)))
 		}
