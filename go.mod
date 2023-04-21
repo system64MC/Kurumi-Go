@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/AllenDang/giu v0.6.2
 	github.com/atotto/clipboard v0.1.4
-	github.com/faiface/beep v1.1.0
 	github.com/ncruces/zenity v0.10.6
 	github.com/veandco/go-sdl2 v0.4.33
 )
@@ -18,15 +17,11 @@ require (
 	github.com/faiface/mainthread v0.0.0-20171120011319-8b78f0a41ae3 // indirect
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20220320163800-277f93cfa958 // indirect
-	github.com/hajimehoshi/oto v0.7.1 // indirect
 	github.com/josephspurrier/goversioninfo v1.4.0 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/sahilm/fuzzy v0.1.0 // indirect
-	golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8 // indirect
 	golang.org/x/image v0.4.0 // indirect
-	golang.org/x/mobile v0.0.0-20190415191353-3e0bab5405d6 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	gopkg.in/eapache/queue.v1 v1.1.0 // indirect
 )
