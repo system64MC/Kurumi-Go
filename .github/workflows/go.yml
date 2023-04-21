@@ -22,9 +22,7 @@ jobs:
         go-version: "1.20"
 
     - name: Build
-      run:
-          go install github.com/AllenDang/giu
-          go build -o "Kurumi.exe" -tags static -ldflags="-s -w -H=windowsgui" main.go
+      run: go build -o "Kurumi.exe" -tags static -ldflags="-s -w -H=windowsgui" main.go
 
     - name: Test
       run: go test -v ./...
