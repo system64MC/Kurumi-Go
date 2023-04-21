@@ -16,13 +16,13 @@ import (
 	"strconv"
 	
 
-	rs "system64.net/kurumigo/randomStuff"
+	rs "github.com/system64MC/Kurumi-Go/randomStuff"
 
 	g "github.com/AllenDang/giu"
 	c "github.com/atotto/clipboard"
 	"github.com/ncruces/zenity"
 
-	"system64.net/kurumigo/kurumi"
+	"github.com/system64MC/Kurumi-Go/kurumi"
 )
 
 var (
