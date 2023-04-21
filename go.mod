@@ -1,4 +1,4 @@
-module system64.net/KurumiGo
+module system64.net/kurumigo
 
 go 1.20
 
