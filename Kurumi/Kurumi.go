@@ -1,18 +1,23 @@
 package kurumi
 
 // typedef unsigned char Uint8;
+// typedef unsigned short Uint16;
+// typedef short Int16;
 // void Wavetable(void *userdata, Uint8 *stream, int len);
 import "C"
 import (
-	"os"
+	"encoding/json"
 	"math"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
-	"math/rand"
-	"github.com/ncruces/zenity"
-	"reflect"
 	"unsafe"
-	"path/filepath"
+	"fmt"
+
+	"github.com/ncruces/zenity"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -65,8 +70,6 @@ type Synth struct {
 	SmoothWin  int32
 	Gain       float32
 	Oversample int32
-	WavSeqLen  int32
-	WaveSeqInd int32
 	//filter
 	FilterEnabled bool
 	Cutoff  float32
@@ -84,10 +87,141 @@ type Synth struct {
 	Normalize bool
 }
 
+func EncodeJson() []byte {
+	// synthJson, err := json.Marshal(SynthContext)
+	// if err != nil {
+    //     fmt.Println("Error:", err)
+    // }
+
+	data := map[string]interface{}{
+		"Format": "vampire",
+		"Synth":  SynthContext,
+	}
+
+	synthJson, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+
+	return synthJson
+}
+
+func SaveJson() error {
+
+	path, errZen := zenity.SelectFileSave(
+		zenity.ConfirmOverwrite(),
+		zenity.Filename("output"),
+		zenity.FileFilters{
+			{"Kurumi Vampire Patch files", []string{"*.kvp"}, false},
+		})
+	if(errZen == zenity.ErrCanceled) {
+		return errZen
+	}
+	if !strings.HasSuffix(path, ".kvp") {
+        path += ".kvp"
+    }
+
+	data := EncodeJson()
+	file, err := os.Create(path)
+	if(err != nil) {
+		return err
+	}
+	
+	_, err2 := file.Write(data)
+	if(err2 != nil) {
+		return err2
+	}
+	return nil
+}
+
+func LoadJson() error {
+	path, errZen := zenity.SelectFile(
+		zenity.FileFilters{
+			{"Kurumi Vampire Patch files", []string{"*.kvp"}, false},
+		})
+
+	if(errZen == zenity.ErrCanceled) {
+			return errZen
+	}
+
+	jsonData, err := os.Open(path)
+	defer jsonData.Close()
+
+	decoder := json.NewDecoder(jsonData)
+
+	// Create a map to decode the JSON into
+	var data map[string]interface{}
+
+	// Decode the JSON
+	err = decoder.Decode(&data)
+	if err != nil {
+		panic(err)
+	}
+
+	// Extract the Synth object from the map
+	synth := &Synth{}
+	format := data["Format"].(string)
+
+	if format != "vampire" {
+		panic("Invalid format")
+	}
+
+	synthMap, ok := data["Synth"].(map[string]interface{})
+	if ok {
+		// Decode the Synth map into a Synth struct
+		bytes, err := json.Marshal(synthMap)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(bytes, synth)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	SynthContext.ModMatrix = synth.ModMatrix
+	
+	SynthContext.Cutoff = synth.Cutoff
+	SynthContext.FilterAdsrEnabled = synth.FilterAdsrEnabled
+	SynthContext.FilterStart = synth.FilterStart
+	SynthContext.FilterAttack = synth.FilterAttack
+	SynthContext.FilterDecay = synth.FilterDecay
+	SynthContext.FilterSustain = synth.FilterSustain
+	SynthContext.FilterType = synth.FilterType
+	SynthContext.FilterEnabled = synth.FilterEnabled
+	SynthContext.Pitch = synth.Pitch
+	SynthContext.Resonance = synth.Resonance
+	
+	SynthContext.Operators = synth.Operators
+	SynthContext.OpOutputs = synth.OpOutputs
+	
+	SynthContext.Normalize = synth.Normalize
+	
+	SynthContext.WaveLen = synth.WaveLen
+	SynthContext.WaveHei = synth.WaveHei
+	
+	SynthContext.MacLen = synth.MacLen
+	SynthContext.Macro = synth.Macro
+	
+	SynthContext.SmoothWin = synth.SmoothWin
+	
+	SynthContext.Gain = synth.Gain
+	
+	SynthContext.Oversample = synth.Oversample
+	
+	Synthesize()
+
+	
+	fmt.Printf("Format: %s\n", data["Format"])
+	fmt.Printf("Synth: %+v\n", synth)
+
+	return nil
+}
+
 var SynthContext *Synth
 
 func ConstructSynth() *Synth {
-	context := &Synth{WaveLen: 32, WaveHei: 31, MacLen: 64, Macro: 0, SmoothWin: 0, Gain: 1.0, Oversample: 1, WavSeqLen: 64}
+	context := &Synth{WaveLen: 32, WaveHei: 31, MacLen: 64, Macro: 0, SmoothWin: 0, Gain: 1.0, Oversample: 1 }
 	context.ModMatrix = [][]bool{
 		{false, false, false, false},
 		{true, false, false, false},
@@ -586,18 +720,32 @@ var Interpolations = []string{
 
 var volROM = [...]float64 {0.0, 0.00390625, 0.0078125, 0.01171875, 0.015625, 0.01953125, 0.0234375, 0.02734375, 0.03125, 0.03515625, 0.0390625, 0.04296875, 0.046875, 0.05078125, 0.0546875, 0.05859375, 0.0625, 0.06640625, 0.0703125, 0.07421875, 0.078125, 0.08203125, 0.0859375, 0.08984375, 0.09375, 0.09765625, 0.1015625, 0.10546875, 0.109375, 0.11328125, 0.1171875, 0.12109375, 0.125, 0.12890625, 0.1328125, 0.13671875, 0.140625, 0.14453125, 0.1484375, 0.15234375, 0.15625, 0.16015625, 0.1640625, 0.16796875, 0.171875, 0.17578125, 0.1796875, 0.18359375, 0.1875, 0.19140625, 0.1953125, 0.19921875, 0.203125, 0.20703125, 0.2109375, 0.21484375, 0.21875, 0.22265625, 0.2265625, 0.23046875, 0.234375, 0.23828125, 0.2421875, 0.24609375, 0.25, 0.25390625, 0.2578125, 0.26171875, 0.265625, 0.26953125, 0.2734375, 0.27734375, 0.28125, 0.28515625, 0.2890625, 0.29296875, 0.296875, 0.30078125, 0.3046875, 0.30859375, 0.3125, 0.31640625, 0.3203125, 0.32421875, 0.328125, 0.33203125, 0.3359375, 0.33984375, 0.34375, 0.34765625, 0.3515625, 0.35546875, 0.359375, 0.36328125, 0.3671875, 0.37109375, 0.375, 0.37890625, 0.3828125, 0.38671875, 0.390625, 0.39453125, 0.3984375, 0.40234375, 0.40625, 0.41015625, 0.4140625, 0.41796875, 0.421875, 0.42578125, 0.4296875, 0.43359375, 0.4375, 0.44140625, 0.4453125, 0.44921875, 0.453125, 0.45703125, 0.4609375, 0.46484375, 0.46875, 0.47265625, 0.4765625, 0.48046875, 0.484375, 0.48828125, 0.4921875, 0.49609375, 0.5, 0.50390625, 0.5078125, 0.51171875, 0.515625, 0.51953125, 0.5234375, 0.52734375, 0.53125, 0.53515625, 0.5390625, 0.54296875, 0.546875, 0.55078125, 0.5546875, 0.55859375, 0.5625, 0.56640625, 0.5703125, 0.57421875, 0.578125, 0.58203125, 0.5859375, 0.58984375, 0.59375, 0.59765625, 0.6015625, 0.60546875, 0.609375, 0.61328125, 0.6171875, 0.62109375, 0.625, 0.62890625, 0.6328125, 0.63671875, 0.640625, 0.64453125, 0.6484375, 0.65234375, 0.65625, 0.66015625, 0.6640625, 0.66796875, 0.671875, 0.67578125, 0.6796875, 0.68359375, 0.6875, 0.69140625, 0.6953125, 0.69921875, 0.703125, 0.70703125, 0.7109375, 0.71484375, 0.71875, 0.72265625, 0.7265625, 0.73046875, 0.734375, 0.73828125, 0.7421875, 0.74609375, 0.75, 0.75390625, 0.7578125, 0.76171875, 0.765625, 0.76953125, 0.7734375, 0.77734375, 0.78125, 0.78515625, 0.7890625, 0.79296875, 0.796875, 0.80078125, 0.8046875, 0.80859375, 0.8125, 0.81640625, 0.8203125, 0.82421875, 0.828125, 0.83203125, 0.8359375, 0.83984375, 0.84375, 0.84765625, 0.8515625, 0.85546875, 0.859375, 0.86328125, 0.8671875, 0.87109375, 0.875, 0.87890625, 0.8828125, 0.88671875, 0.890625, 0.89453125, 0.8984375, 0.90234375, 0.90625, 0.91015625, 0.9140625, 0.91796875, 0.921875, 0.92578125, 0.9296875, 0.93359375, 0.9375, 0.94140625, 0.9453125, 0.94921875, 0.953125, 0.95703125, 0.9609375, 0.96484375, 0.96875, 0.97265625, 0.9765625, 0.98046875, 0.984375, 0.98828125, 0.9921875, 1}
 
+
+func Clamp(low, val, high int) int {
+	if val < low {
+		return low
+	}
+	if val > high {
+		return high
+	}
+	return val
+}
 func (op *Operator) getPhase() float64 {
 	macro := SynthContext.Macro
 	macLen := SynthContext.MacLen
 
+	if !op.CustomPhaseEnv {
 	// Anti divide-by-0
-	if(macLen == 1) {
-		macLen = 2
+		if(macLen == 1) {
+			macLen = 2
+		}
+		return (float64(macro) / float64(macLen-1)) * float64(op.Detune)
 	}
 
-	// Put custom phase env here
-	
-	return (float64(macro) / float64(macLen-1)) * float64(op.Detune)
+	if(len(op.PhaseEnv) < 1) {
+		return 0
+	}
+	return (float64(op.PhaseEnv[int(Clamp(0, int(macro), len(op.PhaseEnv) - 1))]) / 255.0) * float64(op.Detune)
 }
 
 
@@ -1977,13 +2125,13 @@ func phaseAcc(len int) float64 {
 func Wavetable(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	n := int(length)
 	hdr := reflect.SliceHeader{Data: uintptr(unsafe.Pointer(stream)), Len: n, Cap: n}
-	buf := *(*[]C.Uint8)(unsafe.Pointer(&hdr))
+	buf := *(*[]C.Int16)(unsafe.Pointer(&hdr))
 	
-	for i := 0; i < n; i ++ {
-		sample := 128.0
+	for i := 0; i < (n / 2); i ++ {
+		sample := float64(0)
 		ind := 0
 		if(!SynthContext.SongPlaying) {
-			buf[i] = 128
+			buf[i] = (0)
 			continue
 		}
 		if(SynthContext.SongPlaying && len(WaveOutput) > 0 && WaveOutput != nil){
@@ -1994,7 +2142,8 @@ func Wavetable(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		}
 
 		sample = sample * (255 / float64(SynthContext.WaveHei))
-		buf[i] = C.Uint8(sample)
+		s2 := C.Int16(sample) - 128
+		buf[i] = C.Int16((s2) << 4)
 	}
 }
 
@@ -2006,7 +2155,7 @@ func InitAudio() {
 
 	spec := &sdl.AudioSpec{
 		Freq:     sampleHz,
-		Format:   sdl.AUDIO_U8,
+		Format:   sdl.AUDIO_S16,
 		Channels: 1,
 		Samples:  512,
 		Callback: sdl.AudioCallback(C.Wavetable),

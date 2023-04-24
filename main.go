@@ -61,9 +61,16 @@ var comboBoxes = make([]*g.ComboWidget, 0)
 func loop() {
 	g.MainMenuBar().Layout(
 		g.Menu("File").Layout(
-			g.MenuItem("Open"),
+			g.MenuItem("Open").OnClick(func() {
+				kurumi.LoadJson()
+				initWaveStr()
+			}),
 			g.Separator(),
-			g.MenuItem("Save"),
+			g.MenuItem("Save").OnClick(
+				func() {
+					kurumi.SaveJson()
+				},
+			),
 			g.Menu("Export").Layout(
 				g.MenuItem("Furnace Wavetable").OnClick(func ()  {
 					kurumi.CreateFUW()
@@ -1058,7 +1065,7 @@ func buildOperator(a int) *g.TabItemWidget {
 					}),
 				),
 
-				g.Style().SetDisabled(!Context.Operators[opId].CustomPhaseEnv || !Context.Operators[opId].PhaseMod).To(
+				g.Style().SetDisabled(!Context.Operators[opId].CustomPhaseEnv && Context.Operators[opId].Detune == 0).To(
 					g.Label("Phase envelope :"),
 					g.Table().Size(260, 68).Rows(
 						g.TableRow(
@@ -1245,6 +1252,8 @@ func main() {
 	// 		for i := range beepStream.(*beep.StreamerFunc).Samples {}
 	// 	}
 	// }
+
+	kurumi.EncodeJson()
 
 	wnd.Run(loop)
 	// openbrowser("https://www.youtube.com/watch?v=xvFZjo5PgG0")
