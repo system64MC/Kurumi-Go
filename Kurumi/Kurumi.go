@@ -594,7 +594,26 @@ func cubedAbsSquiTri(op *Operator, x float64) float64 {
 	return math.Pow(a, 3)
 }
 
-func noise(op *Operator, x float64) float64 {
+var lsfr = uint16(0b01001_1010_1011_1010)
+func lsfrShift() {
+	// lsfr = lsfr >> 1
+	lsfr = (lsfr << 1) | (((lsfr >> 13) ^ (lsfr >> 14)) & 1)
+}
+
+func noise1bitLsfr(op *Operator, x float64) float64 {
+	lsfrShift()
+	return float64(lsfr & 1) * 2 - 1
+	//return (rand.Float64() * 2) - 1
+}
+
+func noise8bitLsfr(op *Operator, x float64) float64 {
+	lsfrShift()
+	//return float64(lsfr & 1) * 2 - 1
+	return float64(lsfr & 0xFF) / float64(0x7F) - 1
+	//return (rand.Float64() * 2) - 1
+}
+
+func noiseRandom(op *Operator, x float64) float64 {
 	return (rand.Float64() * 2) - 1
 }
 
@@ -649,7 +668,9 @@ var WaveFuncs = []func(*Operator, float64) float64{
 	cubedSquiTri,
 	cubedRectSquiTri,
 	cubedAbsSquiTri,
-	noise,
+	noise1bitLsfr,
+	noise8bitLsfr,
+	noiseRandom,
 	custom,
 	rectCustom,
 	absCustom,
@@ -693,7 +714,9 @@ var Waveforms = []string{
 	"Squi. Cubed Triangle",
 	"Squi. Rect. Cubed Triangle",
 	"Squi. Abs. Cubed Triangle",
-	"Noise",
+	"Noise (1 bit, LFSR)",
+	"Noise (8 bits, LFSR)",
+	"Noise (Random)",
 	"Custom",
 	"Rect. Custom",
 	"Abs. Custom",
@@ -945,6 +968,7 @@ func Synthesize() {
 		myOut = append(myOut, tmp)
 	}
 	WaveOutput = myOut
+	GenerateWaveStr()
 }
 
 
@@ -1311,13 +1335,14 @@ func ApplyAlg(alg int) {
 	}
 }
 
-func GenerateWaveStr() *string {
+var WaveStr = ""
+func GenerateWaveStr() {
 	str := ""
 	for _, n := range WaveOutput {
 		str += strconv.Itoa(n) + " "
 	}
 	str += ";"
-	return &str
+	WaveStr = str
 }
 
 var WaveSeqStr = ""
@@ -1327,7 +1352,7 @@ func GenerateWaveSeqStr() {
 	for i := 0; i < int(SynthContext.MacLen); i++ {
 		SynthContext.Macro = int32(i)
 		Synthesize()
-		str += *GenerateWaveStr() + "\n"
+		str += WaveStr + "\n"
 	}
 	SynthContext.Macro = tmpMac
 	Synthesize()
@@ -1886,8 +1911,8 @@ intBuffer := []byte{
 						tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
 					}
 					myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
-					output = append(output, byte(myOut >> 8))
 					output = append(output, byte(myOut & 0xFF))
+					output = append(output, byte(myOut >> 8))
 					continue
 				}
 				if (SynthContext.WaveHei & 0x0001) == 1 {
@@ -2081,7 +2106,8 @@ func SaveTxt(macro bool) error {
 		GenerateWaveSeqStr()
 		str = WaveSeqStr
 	} else {
-		str = *GenerateWaveStr()
+		GenerateWaveStr()
+		str = WaveStr
 	}
 	_, err2 := file.WriteString(str)
 	if(err2 != nil) {

@@ -3,18 +3,20 @@ package main
 
 import (
 	// "fmt"
-	"embed" 
-	"fmt" 
+	"embed"
+	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io/fs"
 	"log"
 	"math"
+	"os"
 	"os/exec"
 	"runtime"
+	"runtime/pprof"
 	"strconv"
-	
 
 	rs "github.com/system64MC/Kurumi-Go/randomStuff"
 
@@ -585,6 +587,23 @@ func loop() {
 						pos := g.GetCursorScreenPos()
 						color := color.RGBA{200, 75, 75, 255}
 						wt := kurumi.WaveOutput
+						if(len(wt) > 1 << 16) {
+							return
+						}
+						if(kurumi.SynthContext.WaveLen > 4096) {
+							step := float64(kurumi.SynthContext.WaveLen) / 512.0
+							len := float64(len(wt))
+							for i := 0.0; i < len; i += step {
+								x1 := int((float64(i) / step))
+								x2 := int((float64(i) / step) + 1)
+								sample := int(float64(wt[int(i)])*(255.0/float64(Context.WaveHei)) + (float64(Context.WaveHei)/2)*(255.0/float64(Context.WaveHei)))
+								// sample := -int(math.Round(float64(wt[i]) * 255.0 / float64(Context.WaveHei)))
+								canvas.AddRectFilled(pos.Add(image.Pt(x1, 128)),
+								pos.Add(image.Pt(x2, int((float64(-sample+383))))), color, 0, 0)
+							}
+							return
+						}
+
 						for i := 0; i < len(wt); i++ {
 							x1 := int(math.Floor(float64(i) * 512.0 / float64(len(wt))))
 							x2 := int(math.Ceil((float64(i) * 512.0 / float64(len(wt))) + (512.0 / float64(len(wt)))))
@@ -693,9 +712,9 @@ func loop() {
 			),
 			g.Label("Wave output :"),
 			g.Row(
-				g.InputText(kurumi.GenerateWaveStr()).Size(256).Flags(g.InputTextFlagsReadOnly|g.InputTextFlagsAutoSelectAll),
+				g.InputText(&kurumi.WaveStr).Size(256).Flags(g.InputTextFlagsReadOnly|g.InputTextFlagsAutoSelectAll),
 				g.Button("Copy").OnClick(func() {
-					c.WriteAll(*kurumi.GenerateWaveStr())
+					c.WriteAll(*&kurumi.WaveStr)
 				}),
 				g.Tooltip("Copy bitstring to clipboard"),
 			),
@@ -986,7 +1005,7 @@ func buildOperator(a int) *g.TabItemWidget {
 						),
 					).MinHeight(64).BgColor(color.RGBA{200, 75, 75, 0}),
 				).InnerWidth(256),
-				g.Style().SetDisabled(Context.Operators[opId].WaveformId < int32(len(kurumi.Waveforms)-5)).To(
+				g.Style().SetDisabled(Context.Operators[opId].WaveformId < int32(len(kurumi.Waveforms)-4)).To(
 					g.Row(
 						g.Label("Interpolation :"),
 						g.Combo("", kurumi.Interpolations[Context.Operators[opId].Interpolation], kurumi.Interpolations, &Context.Operators[opId].Interpolation).Size(160).OnChange(func() {
@@ -1213,8 +1232,19 @@ func openbrowser(url string) {
 	}
 
 }
-
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 func main() {
+	flag.Parse()
+    if *cpuprofile != "" {
+        f, err := os.Create(*cpuprofile)
+        if err != nil {
+            log.Fatal(err)
+        }
+        pprof.StartCPUProfile(f)
+        defer pprof.StopCPUProfile()
+	}
+	
+
 	// var len = 512
 	// for i := 0; i < len; i++ {
 	// 	sineTable = append(sineTable, uint8(math.Round((math.Sin((2*math.Pi*float64(i))/float64(len))+1)*127.5)))
