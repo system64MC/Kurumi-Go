@@ -825,14 +825,17 @@ func moduloFix(a, b int) int {
 }
 
 func smooth(arr []float64) []float64 {
-	out := make([]float64, 0)
+	if(SynthContext.SmoothWin == 0) {
+		return arr
+	}
+	out := make([]float64, len(arr))
 	for i := 0; i < len(arr); i++ {
 		smp := 0.0
 		for j := -SynthContext.SmoothWin; j <= SynthContext.SmoothWin; j++ {
 			smp += arr[moduloFix(i+int(j), len(arr))]
 		}
 		avg := smp / (float64(SynthContext.SmoothWin*2) + 1)
-		out = append(out, avg)
+		out[i] = avg
 	}
 	return out
 }
@@ -956,8 +959,9 @@ func Synthesize() {
 		}
 	}
 
-	myOut := make([]int, 0)
+	myOut := make([]int, SynthContext.WaveLen)
 	tmpLen := len(myTmp)
+	
 	for c := 0; c < tmpLen; c += oversample {
 		res := 0.0
 		for i := 0; i < oversample; i++ {
@@ -965,10 +969,9 @@ func Synthesize() {
 		}
 		res = res / float64(oversample)
 		tmp := int(math.Round((res + 1) * (float64(SynthContext.WaveHei) / 2.0)))
-		myOut = append(myOut, tmp)
+		myOut[c / oversample] = tmp
 	}
 	WaveOutput = myOut
-	GenerateWaveStr()
 }
 
 
@@ -1028,107 +1031,6 @@ func Resample(input []float64, outputLength int) []float64 {
 	return output
 }
 
-
-
-func Synthesize22() {
-	WaveOutput = make([]int, 0)
-	myTmp := make([]float64, 65536)
-	for x := 0; x < int(65536); x++ {
-		myTmp[x] = fm(float64(x))
-	}
-
-	for x := 0; x < len(myTmp); x++ {
-		myTmp[x] = ClampF64(-1, myTmp[x] * float64(SynthContext.Gain), 1)
-	}
-
-	downsampled := downsampleWaveTableLinear(myTmp, int(SynthContext.WaveLen))
-	myOut := make([]int, 0)
-
-	for c := 0; c < len(downsampled); c++ {
-		res := downsampled[c]
-		// println(res)
-		tmp := int(math.Round((res + 1) * (float64(SynthContext.WaveHei) / 2.0)))
-		myOut = append(myOut, tmp)
-	}
-	WaveOutput = myOut
-}
-
-func downsampleWaveTableLinear2(wavetable []float64, newSampleRate int) []float64 {
-    // Compute the downsampling factor
-    downsampleFactor := float64(len(wavetable)) / float64(newSampleRate)
-    
-    // Create a low-pass filter with a cutoff frequency of 1/downsampleFactor
-    filterSize := 2 * int(downsampleFactor) + 1
-    filter := make([]float64, filterSize)
-    cutoff := 1 / downsampleFactor
-    for i := 0; i < filterSize; i++ {
-        t := float64(i - filterSize/2) / float64(newSampleRate)
-        if t == 0 {
-            filter[i] = 2 * cutoff
-        } else {
-            filter[i] = math.Sin(2 * math.Pi * cutoff * t) / (math.Pi * t)
-        }
-    }
-    
-    // Normalize the filter
-    sum := 0.0
-    for i := range filter {
-        sum += filter[i]
-    }
-    for i := range filter {
-        filter[i] /= sum
-    }
-    
-    // Convolve the filter with the waveform to obtain the downsampled signal
-    downsampled := make([]float64, newSampleRate)
-    for i := 0; i < newSampleRate; i++ {
-        start := int(float64(i) * downsampleFactor)
-        for j := 0; j < filterSize; j++ {
-            if start+j < len(wavetable) {
-                downsampled[i] += wavetable[start+j] * filter[j]
-            }
-        }
-    }
-    
-    return downsampled
-}
-
-func downsampleWaveTableLinear(input []float64, outputLen int) []float64 {
-	// Compute the input and output sample rates
-	inputLen := len(input)
-	sampleRateIn := float64(inputLen)
-	sampleRateOut := float64(outputLen)
-
-	// Compute the ratio between the input and output sample rates
-	ratio := sampleRateIn / sampleRateOut
-
-	// Allocate memory for the output signal
-	output := make([]float64, outputLen)
-
-	// Compute the index of the first sample in the input signal
-	// indexIn := 0
-
-	// Interpolate each sample in the output signal
-	for i := 0; i < outputLen; i++ {
-		// Compute the index of the current sample in the input signal
-		index := int(float64(i) * ratio)
-
-		// Compute the fractional distance between the current sample index and the next sample index
-		frac := float64(i)*ratio - float64(index)
-
-		// Interpolate the current sample using linear interpolation
-		if index < inputLen-1 {
-			output[i] = (1-frac)*input[index] + frac*input[index+1]
-		} else {
-			// If we've reached the end of the input signal, repeat the last sample
-			output[i] = input[inputLen-1]
-		}
-	}
-
-	return output
-}
-
-
 func (op *Operator) oscillate(x float64) float64 {
 	if op.Reverse {
 
@@ -1158,7 +1060,7 @@ func (op *Operator) getVolume() float64 {
 
 func (op *Operator) customEnv() float64 {
 	index := int(ClampF64(0.0, float64(SynthContext.Macro), float64(len(op.VolEnv))))
-	return (float64(op.Tl) * (volROM[op.VolEnv[index] & 0b11111111]))
+	return (float64(op.Tl) * (volROM[op.VolEnv[Clamp(0, index, len(op.VolEnv) - 1)] & 0b11111111]))
 }
 
 func (op *Operator) adsr() float64 {
@@ -1352,6 +1254,8 @@ func GenerateWaveSeqStr() {
 	for i := 0; i < int(SynthContext.MacLen); i++ {
 		SynthContext.Macro = int32(i)
 		Synthesize()
+		GenerateWaveStr()
+
 		str += WaveStr + "\n"
 	}
 	SynthContext.Macro = tmpMac
@@ -1838,62 +1742,179 @@ func getSampleRate() int {
     return int(math.Floor((440 * float64(len(WaveOutput))) / 2.0))
 }
 
+func createWavNew(path string, macro bool, bits16 bool) error {
+	file, err := os.Create(path)
+	var bufLen int
+	if macro {
+		bufLen = len(WaveOutput) * int(SynthContext.MacLen)
+	} else {
+		bufLen = len(WaveOutput)
+	}
+
+	var frames = 1
+	if(macro) {
+		frames = int(SynthContext.MacLen)
+	}
+
+	var bits byte = 8
+	if bits16 {
+		bits = 16
+	}
+
+	chunkSize := 0
+	if(bits16) {
+		chunkSize = 36 + (bufLen * frames) * 2
+	} else {
+		chunkSize = 36 + (bufLen * frames)
+	}
+
+	subchunkSize := 0
+	if(bits16) {
+		subchunkSize = (bufLen * frames) * 2
+	} else {
+		subchunkSize = (bufLen * frames)
+	}
+
+	sampleRate := getSampleRate()
+	byteRate := 0
+	if(bits16) {
+		byteRate = (sampleRate * 16) / 8
+	} else {
+		byteRate = sampleRate
+	}
+
+	intBuffer := []byte{
+		0x52, 0x49, 0x46, 0x46, // ChunkID: "RIFF" in ASCII form, big endian
+		byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later, 
+		0x57, 0x41, 0x56, 0x45, // Format: "WAVE" in ASCII form
+		0x66, 0x6d, 0x74, 0x20, // Subchunk1ID: "fmt " in ASCII form
+		0x10, 0x00, 0x00, 0x00, // Subchunk1Size: 16 for PCM
+		0x01, 0x00,             // AudioFormat: PCM = 1
+		0x01, 0x00,             // NumChannels: Mono = 1
+		byte(sampleRate & 0xFF), byte((sampleRate >> 8) & 0xFF), byte((sampleRate >> 16) & 0xFF), byte(sampleRate >> 24), // SampleRate: 44100 Hz - little endian
+		byte(byteRate & 0xFF), byte((byteRate >> 8) & 0xFF), byte((byteRate >> 16) & 0xFF), byte(byteRate >> 24), // ByteRate: 44100 * 1 * 16 / 8 - little endian
+		byte(bits / 8), 0x00,             // BlockAlign: 1 * 16 / 8 - little endian
+		bits, 0x00,             // BitsPerSample: 16 bits per sample
+		0x64, 0x61, 0x74, 0x61, // Subchunk2ID: "data" in ASCII form
+		byte(subchunkSize & 0xFF), byte((subchunkSize >> 8) & 0xFF), byte((subchunkSize >> 16) & 0xFF), byte(subchunkSize >> 24), // Subchunk2Size - will be filled later
+	}
+
+	_, err = file.Write(intBuffer)
+	if(err != nil) {
+		return err
+	}
+
+		if(macro) {
+			tmpMac := SynthContext.Macro
+			for i := 0; i < int(SynthContext.MacLen); i++ {
+				SynthContext.Macro = int32(i)
+				Synthesize()
+
+				for _, sample := range WaveOutput {
+					var tmp float64;	
+						if (SynthContext.WaveHei & 0x0001) == 1 {
+							tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
+						} else {
+							tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
+						}
+					if(bits16) {
+
+						myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
+						b1 := byte(myOut & 0xFF)
+						b2 := byte(myOut >> 8)
+						file.Write([]byte{b1, b2})
+						continue
+					}
+
+					myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
+					file.Write([]byte{byte(myOut)})
+
+				}
+			}
+			SynthContext.Macro = tmpMac
+			Synthesize()
+		} else {
+			for _, sample := range WaveOutput {
+				var tmp float64;	
+					if (SynthContext.WaveHei & 0x0001) == 1 {
+						tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
+					} else {
+						tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
+					}
+				if(bits16) {
+
+					myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
+					b1 := byte(myOut & 0xFF)
+					b2 := byte(myOut >> 8)
+					file.Write([]byte{b1, b2})
+					continue
+				}
+
+				myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
+				file.Write([]byte{byte(myOut)})
+			}
+		}
+	return nil
+}
+
+	
+
 func createWav(path string, macro bool, bits16 bool) error {
 	file, err := os.Create(path)
 	var bufLen int
-if macro {
-    bufLen = len(WaveOutput) * int(SynthContext.MacLen)
-} else {
-    bufLen = len(WaveOutput)
-}
+	if macro {
+		bufLen = len(WaveOutput) * int(SynthContext.MacLen)
+	} else {
+		bufLen = len(WaveOutput)
+	}
 
-var frames = 1
-if(macro) {
-	frames = int(SynthContext.MacLen)
-}
+	var frames = 1
+	if(macro) {
+		frames = int(SynthContext.MacLen)
+	}
 
-var bits byte = 8
-if bits16 {
-    bits = 16
-}
+	var bits byte = 8
+	if bits16 {
+		bits = 16
+	}
 
-chunkSize := 0
-if(bits16) {
-	chunkSize = 36 + (bufLen * frames) * 2
-} else {
-	chunkSize = 36 + (bufLen * frames)
-}
+	chunkSize := 0
+	if(bits16) {
+		chunkSize = 36 + (bufLen * frames) * 2
+	} else {
+		chunkSize = 36 + (bufLen * frames)
+	}
 
-subchunkSize := 0
-if(bits16) {
-	subchunkSize = (bufLen * frames) * 2
-} else {
-	subchunkSize = (bufLen * frames)
-}
+	subchunkSize := 0
+	if(bits16) {
+		subchunkSize = (bufLen * frames) * 2
+	} else {
+		subchunkSize = (bufLen * frames)
+	}
 
-sampleRate := getSampleRate()
-byteRate := 0
-if(bits16) {
-	byteRate = (sampleRate * 16) / 8
-} else {
-	byteRate = sampleRate
-}
+	sampleRate := getSampleRate()
+	byteRate := 0
+	if(bits16) {
+		byteRate = (sampleRate * 16) / 8
+	} else {
+		byteRate = sampleRate
+	}
 
-intBuffer := []byte{
-	0x52, 0x49, 0x46, 0x46, // ChunkID: "RIFF" in ASCII form, big endian
-	byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later, 
-	0x57, 0x41, 0x56, 0x45, // Format: "WAVE" in ASCII form
-	0x66, 0x6d, 0x74, 0x20, // Subchunk1ID: "fmt " in ASCII form
-	0x10, 0x00, 0x00, 0x00, // Subchunk1Size: 16 for PCM
-	0x01, 0x00,             // AudioFormat: PCM = 1
-	0x01, 0x00,             // NumChannels: Mono = 1
-	byte(sampleRate & 0xFF), byte((sampleRate >> 8) & 0xFF), byte((sampleRate >> 16) & 0xFF), byte(sampleRate >> 24), // SampleRate: 44100 Hz - little endian
-	byte(byteRate & 0xFF), byte((byteRate >> 8) & 0xFF), byte((byteRate >> 16) & 0xFF), byte(byteRate >> 24), // ByteRate: 44100 * 1 * 16 / 8 - little endian
-	byte(bits / 8), 0x00,             // BlockAlign: 1 * 16 / 8 - little endian
-	bits, 0x00,             // BitsPerSample: 16 bits per sample
-	0x64, 0x61, 0x74, 0x61, // Subchunk2ID: "data" in ASCII form
-	byte(subchunkSize & 0xFF), byte((subchunkSize >> 8) & 0xFF), byte((subchunkSize >> 16) & 0xFF), byte(subchunkSize >> 24), // Subchunk2Size - will be filled later
-}
+	intBuffer := []byte{
+		0x52, 0x49, 0x46, 0x46, // ChunkID: "RIFF" in ASCII form, big endian
+		byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later, 
+		0x57, 0x41, 0x56, 0x45, // Format: "WAVE" in ASCII form
+		0x66, 0x6d, 0x74, 0x20, // Subchunk1ID: "fmt " in ASCII form
+		0x10, 0x00, 0x00, 0x00, // Subchunk1Size: 16 for PCM
+		0x01, 0x00,             // AudioFormat: PCM = 1
+		0x01, 0x00,             // NumChannels: Mono = 1
+		byte(sampleRate & 0xFF), byte((sampleRate >> 8) & 0xFF), byte((sampleRate >> 16) & 0xFF), byte(sampleRate >> 24), // SampleRate: 44100 Hz - little endian
+		byte(byteRate & 0xFF), byte((byteRate >> 8) & 0xFF), byte((byteRate >> 16) & 0xFF), byte(byteRate >> 24), // ByteRate: 44100 * 1 * 16 / 8 - little endian
+		byte(bits / 8), 0x00,             // BlockAlign: 1 * 16 / 8 - little endian
+		bits, 0x00,             // BitsPerSample: 16 bits per sample
+		0x64, 0x61, 0x74, 0x61, // Subchunk2ID: "data" in ASCII form
+		byte(subchunkSize & 0xFF), byte((subchunkSize >> 8) & 0xFF), byte((subchunkSize >> 16) & 0xFF), byte(subchunkSize >> 24), // Subchunk2Size - will be filled later
+	}
 
     var output []uint8
     if macro {
@@ -2129,7 +2150,7 @@ func SaveFile(macro bool, bits16 bool) {
 	if !strings.HasSuffix(path, ".wav") {
         path += ".wav"
     }
-	createWav(path, macro, bits16)
+	createWavNew(path, macro, bits16)
 }
 
 const (
