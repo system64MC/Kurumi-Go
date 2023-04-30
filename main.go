@@ -843,7 +843,7 @@ func buildOperator(a int) *g.TabItemWidget {
 
 				),
 				g.Row(
-					g.SliderInt(&Context.Operators[opId].Mult, 1, 32).Size(256).OnChange(func() {
+					g.SliderInt(&Context.Operators[opId].Mult, 0, 32).Size(256).OnChange(func() {
 						
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()

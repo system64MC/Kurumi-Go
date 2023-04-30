@@ -322,12 +322,12 @@ func lerp(x, y, a float64) float64 {
 
 func getWTSample(op *Operator, x float64) float64 {
 	if(op.Morphing) {
-		a := interpolate(x * float64(len(op.Wavetable)) * float64(op.Mult) + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
-		b := interpolate(x * float64(len(op.MorphWave)) * float64(op.Mult) + (float64(op.Phase) * float64(len(op.MorphWave)) + op.getPhase() * float64(len(op.MorphWave))), op, op.MorphWave)
+		a := interpolate(x * float64(len(op.Wavetable)) * op.getMult() + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
+		b := interpolate(x * float64(len(op.MorphWave)) * op.getMult() + (float64(op.Phase) * float64(len(op.MorphWave)) + op.getPhase() * float64(len(op.MorphWave))), op, op.MorphWave)
 		c := float64(SynthContext.Macro) / float64(op.MorphTime)
 		return lerp(a, b, c)
 	}
-	return interpolate(x * float64(len(op.Wavetable)) * float64(op.Mult) + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
+	return interpolate(x * float64(len(op.Wavetable)) * op.getMult() + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
 }
 
 func noInterpolation(x float64, wt []uint8) float64 {
@@ -436,10 +436,17 @@ func PasteOp(op *Operator) {
 	op.MorphWave = morph
 	Synthesize()
 }
+
+func (op *Operator) getMult() float64 {
+	if(op.Mult != 0) {
+		return float64(op.Mult)
+	}
+	return 0.5
+}
 /*------------------------------------------------*/
 
 func sine(op *Operator, x float64) float64 {
-	return math.Sin((x * float64(op.Mult) * 2 * math.Pi) + (float64(op.Phase)*2*math.Pi + (op.getPhase() * math.Pi * 2)))
+	return math.Sin((x * op.getMult() * 2 * math.Pi) + (float64(op.Phase)*2*math.Pi + (op.getPhase() * math.Pi * 2)))
 }
 func rectSine(op *Operator, x float64) float64 {
 	return math.Max(sine(op, x), 0)
@@ -448,14 +455,14 @@ func absSine(op *Operator, x float64) float64 {
 	return math.Abs(sine(op, x))
 }
 func quarterSine(op *Operator, x float64) float64 {
-	if math.Mod((x*float64(op.Mult)+float64(op.Phase)+op.getPhase()), 0.5) <= 0.25 {
+	if math.Mod((x*op.getMult()+float64(op.Phase)+op.getPhase()), 0.5) <= 0.25 {
 		return absSine(op, x)
 	}
 	return 0
 }
 func squishedSine(op *Operator, x float64) float64 {
 	if sine(op, x) > 0 {
-		return math.Sin((x * float64(op.Mult) * 4 * math.Pi) + (float64(op.Phase)*4*math.Pi + (op.getPhase() * math.Pi * 4)))
+		return math.Sin((x * op.getMult() * 4 * math.Pi) + (float64(op.Phase)*4*math.Pi + (op.getPhase() * math.Pi * 4)))
 	}
 	return 0
 }
@@ -468,7 +475,7 @@ func squishedAbsSine(op *Operator, x float64) float64 {
 
 func square(op *Operator, x float64) float64 {
 	width := op.getDutyCycle()
-	a := moduloF64(x * math.Pi * 2 * float64(op.Mult) + (float64(op.Phase) * math.Pi * 2 + op.getPhase() * math.Pi * 2), math.Pi * 2)
+	a := moduloF64(x * math.Pi * 2 * op.getMult() + (float64(op.Phase) * math.Pi * 2 + op.getPhase() * math.Pi * 2), math.Pi * 2)
 	if a >= (math.Pi * width * 2) {
 		return -1
 	}
@@ -484,7 +491,7 @@ func rectSquare(op *Operator, x float64) float64 {
 }
 
 func saw(op *Operator, x float64) float64 {
-	return math.Atan(math.Tan(x*math.Pi*float64(op.Mult)+(float64(op.Phase)*math.Pi+(op.getPhase()*math.Pi)))) / (math.Pi * 0.5)
+	return math.Atan(math.Tan(x*math.Pi*op.getMult()+(float64(op.Phase)*math.Pi+(op.getPhase()*math.Pi)))) / (math.Pi * 0.5)
 }
 func rectSaw(op *Operator, x float64) float64 {
 	return math.Max(saw(op, x), 0)
@@ -548,14 +555,14 @@ func absTriangle(op *Operator, x float64) float64 {
 	return math.Abs(triangle(op, x))
 }
 func quarterTriangle(op *Operator, x float64) float64 {
-	if math.Mod((x*float64(op.Mult)+(float64(op.Phase)+op.getPhase())), 0.5) <= 0.25 {
+	if math.Mod((x*op.getMult()+(float64(op.Phase)+op.getPhase())), 0.5) <= 0.25 {
 		return triangle(op, x)
 	}
 	return 0
 }
 func squishedTriangle(op *Operator, x float64) float64 {
 	if sine(op, x) > 0 {
-		return math.Asin(math.Sin((x * float64(op.Mult) * 4 * math.Pi)   + (float64(op.Phase) * math.Pi * 4 + (op.getPhase() * math.Pi * 4)) ))/ (math.Pi/2)
+		return math.Asin(math.Sin((x * op.getMult() * 4 * math.Pi)   + (float64(op.Phase) * math.Pi * 4 + (op.getPhase() * math.Pi * 4)) ))/ (math.Pi/2)
 	}
 	return 0
 }
@@ -1041,11 +1048,11 @@ func (op *Operator) oscillate(x float64) float64 {
 }
 
 func (op *Operator) getFB() float64 {
-	return float64(op.Feedback) * (float64(op.Prev) / float64(6*op.Mult))
+	return float64(op.Feedback) * (float64(op.Prev) / float64(6*op.getMult()))
 }
 
 func (op *Operator) getFB3() float64 {
-	return float64(op.Feedback) * (float64(op.Prev) / float64(op.Mult / (SynthContext.WaveLen * SynthContext.Oversample)))
+	return float64(op.Feedback) * (float64(op.Prev) / (op.getMult() / float64(SynthContext.WaveLen * SynthContext.Oversample)))
 }
 
 func (op *Operator) getVolume() float64 {
