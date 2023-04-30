@@ -25,6 +25,7 @@ jobs:
       run:
         GOOS=windows
         GOARCH=amd64
+        CGO_ENABLED=1
         go build -o "Kurumi.exe" -tags static -ldflags="-s -w -H=windowsgui" .
 
     - name: Test
