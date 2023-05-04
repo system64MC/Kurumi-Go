@@ -795,7 +795,6 @@ func ApplyStringToWaveform(opId int,str string, destination Dest) {
 		p, err := strconv.ParseUint(v, 10, 8)
 		if(err == nil) {
 			bArr = append(bArr, uint8(p))
-			println(p)
 		} else {
 			println(err)
 		}
@@ -1586,7 +1585,6 @@ func CreateFTIN163(macro bool) error {
     }
 	file, err := os.Create(fpath)
 	name := filepath.Base(fpath)
-	println(name)
 	name = name[:len(name)-len(filepath.Ext(fpath))]
 	if (len(name) > 127) {
 		name = name[:127]
@@ -1751,12 +1749,6 @@ func getSampleRate() int {
 
 func createWavNew(path string, macro bool, bits16 bool) error {
 	file, err := os.Create(path)
-	var bufLen int
-	if macro {
-		bufLen = len(WaveOutput) * int(SynthContext.MacLen)
-	} else {
-		bufLen = len(WaveOutput)
-	}
 
 	var frames = 1
 	if(macro) {
@@ -1770,16 +1762,16 @@ func createWavNew(path string, macro bool, bits16 bool) error {
 
 	chunkSize := 0
 	if(bits16) {
-		chunkSize = 36 + (bufLen * frames) * 2
+		chunkSize = 36 + (len(WaveOutput) * frames) * 2
 	} else {
-		chunkSize = 36 + (bufLen * frames)
+		chunkSize = 36 + (len(WaveOutput) * frames)
 	}
 
 	subchunkSize := 0
 	if(bits16) {
-		subchunkSize = (bufLen * frames) * 2
+		subchunkSize = (len(WaveOutput) * frames) * 2
 	} else {
-		subchunkSize = (bufLen * frames)
+		subchunkSize = (len(WaveOutput) * frames)
 	}
 
 	sampleRate := getSampleRate()
@@ -2200,7 +2192,7 @@ func Wavetable(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 		buf[i] = C.Int16((s2) << 4)
 	}
 }
-
+ 
 func InitAudio() {
 	if err := sdl.Init(sdl.INIT_AUDIO); err != nil {
 		println(err)
