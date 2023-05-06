@@ -1,13 +1,13 @@
-# Kurumi - The Wavetable builder as powerful as vampires
+# Kurumi - The Wavetable builder as powerful as vampires 🎹🧛‍♀️
 
-What is [Kurumi](https://en.touhouwiki.net/wiki/Kurumi)?
+### What is [Kurumi](https://en.touhouwiki.net/wiki/Kurumi)?
 Kurumi is a tool written in Go that lets you creating wavetables for various wavetable soundchips such as the Namco 163, the Konami SCC, the PC-Engine, etc...
 
 It uses the power of FM Synthesis to produce the waveforms. Turn your Famicom with N163 into a MegaDrive!
 
 There is PWM and filters such as lowpass, highpass and bandpass, so you can turn your Namco 163 and your SCC into a Commodore 64 SID. You can even reproduce some AY-3 buzzer sounds.
 
-### Features
+### Features ✨
  - 4 Operators FM Synthesis, with other modes such as :
     - OR
     - XOR
@@ -36,6 +36,6 @@ There is PWM and filters such as lowpass, highpass and bandpass, so you can turn
  - Export to .WAV! Use Kurumi as a sampler!
  - Piano to preview your patches
  
-### Discord Server
+### Discord Server 🗣️
 You can join the official Kurumi Discord server for sharing Kurumi related stuff such as patches, songs you made, tips and so on. I also provide support here :
 https://discord.gg/ZCZEZsqE7w
