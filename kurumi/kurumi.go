@@ -7,6 +7,7 @@ package kurumi
 import "C"
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"os"
@@ -15,10 +16,10 @@ import (
 	"strconv"
 	"strings"
 	"unsafe"
-	"fmt"
 
 	"github.com/ncruces/zenity"
 
+	g "github.com/AllenDang/giu"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -31,7 +32,7 @@ type Adsr struct {
 
 type Operator struct {
 	Tl              float32
-	Reverse bool
+	Reverse         bool
 	Adsr            Adsr
 	WaveformId      int32
 	Mult            int32
@@ -41,7 +42,7 @@ type Operator struct {
 	PhaseRev        bool
 	Feedback        float32
 	Prev            float32
-	Curr float32
+	Curr            float32
 	UseCustomVolEnv bool
 	VolEnv          []uint8
 	PhaseEnv        []uint8
@@ -52,8 +53,8 @@ type Operator struct {
 	Morphing        bool
 	MorphTime       int32
 	ModMode         int32
-	DutyCycle 		float32
-	PwmAdsr			Adsr
+	DutyCycle       float32
+	PwmAdsr         Adsr
 	PwmAdsrEnabled  bool
 
 	IsEnvelopeEnabled bool
@@ -72,26 +73,26 @@ type Synth struct {
 	Oversample int32
 	//filter
 	FilterEnabled bool
-	Cutoff  float32
-	Pitch int32
-	Resonance  float32
-	FilterType int32
+	Cutoff        float32
+	Pitch         int32
+	Resonance     float32
+	FilterType    int32
 
 	FilterAdsrEnabled bool
-	FilterStart float32
-	FilterAttack int32
-	FilterDecay int32
-	FilterSustain float32
+	FilterStart       float32
+	FilterAttack      int32
+	FilterDecay       int32
+	FilterSustain     float32
 
 	SongPlaying bool
-	Normalize bool
+	Normalize   bool
 }
 
 func EncodeJson() []byte {
 	// synthJson, err := json.Marshal(SynthContext)
 	// if err != nil {
-    //     fmt.Println("Error:", err)
-    // }
+	//     fmt.Println("Error:", err)
+	// }
 
 	data := map[string]interface{}{
 		"Format": "vampire",
@@ -114,21 +115,21 @@ func SaveJson() error {
 		zenity.FileFilters{
 			{"Kurumi Vampire Patch files", []string{"*.kvp"}, false},
 		})
-	if(errZen == zenity.ErrCanceled) {
+	if errZen == zenity.ErrCanceled {
 		return errZen
 	}
 	if !strings.HasSuffix(path, ".kvp") {
-        path += ".kvp"
-    }
+		path += ".kvp"
+	}
 
 	data := EncodeJson()
 	file, err := os.Create(path)
-	if(err != nil) {
+	if err != nil {
 		return err
 	}
-	
+
 	_, err2 := file.Write(data)
-	if(err2 != nil) {
+	if err2 != nil {
 		return err2
 	}
 	return nil
@@ -140,8 +141,8 @@ func LoadJson() error {
 			{"Kurumi Vampire Patch files", []string{"*.kvp"}, false},
 		})
 
-	if(errZen == zenity.ErrCanceled) {
-			return errZen
+	if errZen == zenity.ErrCanceled {
+		return errZen
 	}
 
 	jsonData, err := os.Open(path)
@@ -180,7 +181,7 @@ func LoadJson() error {
 	}
 
 	SynthContext.ModMatrix = synth.ModMatrix
-	
+
 	SynthContext.Cutoff = synth.Cutoff
 	SynthContext.FilterAdsrEnabled = synth.FilterAdsrEnabled
 	SynthContext.FilterStart = synth.FilterStart
@@ -191,27 +192,26 @@ func LoadJson() error {
 	SynthContext.FilterEnabled = synth.FilterEnabled
 	SynthContext.Pitch = synth.Pitch
 	SynthContext.Resonance = synth.Resonance
-	
+
 	SynthContext.Operators = synth.Operators
 	SynthContext.OpOutputs = synth.OpOutputs
-	
+
 	SynthContext.Normalize = synth.Normalize
-	
+
 	SynthContext.WaveLen = synth.WaveLen
 	SynthContext.WaveHei = synth.WaveHei
-	
+
 	SynthContext.MacLen = synth.MacLen
 	SynthContext.Macro = synth.Macro
-	
+
 	SynthContext.SmoothWin = synth.SmoothWin
-	
+
 	SynthContext.Gain = synth.Gain
-	
+
 	SynthContext.Oversample = synth.Oversample
-	
+
 	Synthesize()
 
-	
 	fmt.Printf("Format: %s\n", data["Format"])
 	fmt.Printf("Synth: %+v\n", synth)
 
@@ -221,7 +221,7 @@ func LoadJson() error {
 var SynthContext *Synth
 
 func ConstructSynth() *Synth {
-	context := &Synth{WaveLen: 32, WaveHei: 31, MacLen: 64, Macro: 0, SmoothWin: 0, Gain: 1.0, Oversample: 1 }
+	context := &Synth{WaveLen: 32, WaveHei: 31, MacLen: 64, Macro: 0, SmoothWin: 0, Gain: 1.0, Oversample: 1}
 	context.ModMatrix = [][]bool{
 		{false, false, false, false},
 		{true, false, false, false},
@@ -248,8 +248,8 @@ func ConstructSynth() *Synth {
 					Prev:            0,
 					UseCustomVolEnv: false,
 					MorphTime:       64,
-					DutyCycle: 		 0.5,
-					PwmAdsr: Adsr{0.5, 0, 0, 0.5},
+					DutyCycle:       0.5,
+					PwmAdsr:         Adsr{0.5, 0, 0, 0.5},
 					Interpolation:   0})
 		} else {
 			context.Operators = append(context.Operators,
@@ -270,8 +270,8 @@ func ConstructSynth() *Synth {
 					Prev:            0,
 					UseCustomVolEnv: false,
 					MorphTime:       64,
-					DutyCycle: 		 0.5,
-					PwmAdsr: 		 Adsr{0.5, 0, 0, 0.5},
+					DutyCycle:       0.5,
+					PwmAdsr:         Adsr{0.5, 0, 0, 0.5},
 					Interpolation:   0})
 		}
 	}
@@ -288,8 +288,8 @@ func moduloInt(a int, b int) int {
 }
 
 func minandmax(values []uint8) (uint8, uint8) {
-	min := values[0]   //assign the first element equal to min
-	max := values[0]  //assign the first element equal to max
+	min := values[0] //assign the first element equal to min
+	max := values[0] //assign the first element equal to max
 	for _, number := range values {
 		if number < min {
 			min = number
@@ -302,8 +302,8 @@ func minandmax(values []uint8) (uint8, uint8) {
 }
 
 func minandmaxFloat(values []float64) (float64, float64) {
-	min := values[0]   //assign the first element equal to min
-	max := values[0]  //assign the first element equal to max
+	min := values[0] //assign the first element equal to min
+	max := values[0] //assign the first element equal to max
 	for _, number := range values {
 		if number < min {
 			min = number
@@ -317,17 +317,17 @@ func minandmaxFloat(values []float64) (float64, float64) {
 }
 
 func lerp(x, y, a float64) float64 {
-	return x * (1 - a) + y * a
+	return x*(1-a) + y*a
 }
 
 func getWTSample(op *Operator, x float64) float64 {
-	if(op.Morphing) {
-		a := interpolate(x * float64(len(op.Wavetable)) * op.getMult() + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
-		b := interpolate(x * float64(len(op.MorphWave)) * op.getMult() + (float64(op.Phase) * float64(len(op.MorphWave)) + op.getPhase() * float64(len(op.MorphWave))), op, op.MorphWave)
+	if op.Morphing {
+		a := interpolate(x*float64(len(op.Wavetable))*op.getMult()+(float64(op.Phase)*float64(len(op.Wavetable))+op.getPhase()*float64(len(op.Wavetable))), op, op.Wavetable)
+		b := interpolate(x*float64(len(op.MorphWave))*op.getMult()+(float64(op.Phase)*float64(len(op.MorphWave))+op.getPhase()*float64(len(op.MorphWave))), op, op.MorphWave)
 		c := float64(SynthContext.Macro) / float64(op.MorphTime)
 		return lerp(a, b, c)
 	}
-	return interpolate(x * float64(len(op.Wavetable)) * op.getMult() + (float64(op.Phase) * float64(len(op.Wavetable)) + op.getPhase() * float64(len(op.Wavetable))), op, op.Wavetable)
+	return interpolate(x*float64(len(op.Wavetable))*op.getMult()+(float64(op.Phase)*float64(len(op.Wavetable))+op.getPhase()*float64(len(op.Wavetable))), op, op.Wavetable)
 }
 
 func noInterpolation(x float64, wt []uint8) float64 {
@@ -336,7 +336,7 @@ func noInterpolation(x float64, wt []uint8) float64 {
 	len := len(wt)
 	_, max := minandmax(wt)
 	myMax := float64(max) / 2.0
-	s0 := float64(wt[moduloInt(int(idx), len)]) / myMax - 1
+	s0 := float64(wt[moduloInt(int(idx), len)])/myMax - 1
 	return s0
 }
 
@@ -347,9 +347,9 @@ func linearInterpolation(x float64, wt []uint8) float64 {
 	_, m := minandmax(wt)
 	max := float64(m) / 2.0
 	mu := (t - float64(idx))
-	s0 := float64(wt[moduloInt(idx, len)]) / max - 1.0
-	s1 := float64(wt[moduloInt(idx + 1, len)]) / max - 1.0
-	return s0 + mu * s1 - (mu * s0)
+	s0 := float64(wt[moduloInt(idx, len)])/max - 1.0
+	s1 := float64(wt[moduloInt(idx+1, len)])/max - 1.0
+	return s0 + mu*s1 - (mu * s0)
 }
 
 func cosineInterpolation(x float64, wt []uint8) float64 {
@@ -359,10 +359,10 @@ func cosineInterpolation(x float64, wt []uint8) float64 {
 	_, m := minandmax(wt)
 	max := float64(m) / 2.0
 	mu := (t - float64(idx))
-	muCos := (1 - math.Cos(mu * math.Pi) / 2)
-	s0 := float64(wt[moduloInt(idx, len)]) / max - 1.0
-	s1 := float64(wt[moduloInt(idx + 1, len)]) / max - 1.0
-	return s0 + muCos * s1 - (muCos * s0)
+	muCos := (1 - math.Cos(mu*math.Pi)/2)
+	s0 := float64(wt[moduloInt(idx, len)])/max - 1.0
+	s1 := float64(wt[moduloInt(idx+1, len)])/max - 1.0
+	return s0 + muCos*s1 - (muCos * s0)
 }
 
 func cubicInterpolation(x float64, wt []uint8) float64 {
@@ -371,17 +371,17 @@ func cubicInterpolation(x float64, wt []uint8) float64 {
 	len := len(wt)
 	_, m := minandmax(wt)
 	max := float64(m) / 2.0
-	s0 := float64(wt[moduloInt(idx - 1, len)]) / max - 1.0
-	s1 := float64(wt[moduloInt(idx, len)]) / max - 1.0
-	s2 := float64(wt[moduloInt(idx + 1, len)]) / max - 1.0
-	s3 := float64(wt[moduloInt(idx + 2, len)]) / max - 1.0
+	s0 := float64(wt[moduloInt(idx-1, len)])/max - 1.0
+	s1 := float64(wt[moduloInt(idx, len)])/max - 1.0
+	s2 := float64(wt[moduloInt(idx+1, len)])/max - 1.0
+	s3 := float64(wt[moduloInt(idx+2, len)])/max - 1.0
 	mu := (t - float64(idx))
 	mu2 := mu * mu
-	a0 := -0.5 * s0 + 1.5 * s1 - 1.5 * s2 + 0.5 * s3
-    a1 := s0 - 2.5 * s1 + 2 * s2 - 0.5 * s3
-    a2 := -0.5 * s0 + 0.5 * s2
-    a3 := s1
-	return (a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3)
+	a0 := -0.5*s0 + 1.5*s1 - 1.5*s2 + 0.5*s3
+	a1 := s0 - 2.5*s1 + 2*s2 - 0.5*s3
+	a2 := -0.5*s0 + 0.5*s2
+	a3 := s1
+	return (a0*mu*mu2 + a1*mu2 + a2*mu + a3)
 }
 
 func interpolate(x float64, op *Operator, wt []uint8) float64 {
@@ -402,13 +402,13 @@ func interpolate(x float64, op *Operator, wt []uint8) float64 {
 var CopiedOp *Operator = nil
 
 func CopyOp(op *Operator) {
-	CopiedOp = &Operator {}
+	CopiedOp = &Operator{}
 	*CopiedOp = *op
 	volEnv := make([]uint8, len(op.VolEnv))
 	phaseEnv := make([]uint8, len(op.PhaseEnv))
 	wav := make([]uint8, len(op.Wavetable))
 	morph := make([]uint8, len(op.MorphWave))
-	
+
 	copy(volEnv, op.VolEnv)
 	copy(phaseEnv, op.PhaseEnv)
 	copy(wav, op.Wavetable)
@@ -425,7 +425,7 @@ func PasteOp(op *Operator) {
 	phaseEnv := make([]uint8, len(CopiedOp.PhaseEnv))
 	wav := make([]uint8, len(CopiedOp.Wavetable))
 	morph := make([]uint8, len(CopiedOp.MorphWave))
-	
+
 	copy(volEnv, CopiedOp.VolEnv)
 	copy(phaseEnv, CopiedOp.PhaseEnv)
 	copy(wav, CopiedOp.Wavetable)
@@ -438,11 +438,12 @@ func PasteOp(op *Operator) {
 }
 
 func (op *Operator) getMult() float64 {
-	if(op.Mult != 0) {
+	if op.Mult != 0 {
 		return float64(op.Mult)
 	}
 	return 0.5
 }
+
 /*------------------------------------------------*/
 
 func sine(op *Operator, x float64) float64 {
@@ -475,7 +476,7 @@ func squishedAbsSine(op *Operator, x float64) float64 {
 
 func square(op *Operator, x float64) float64 {
 	width := op.getDutyCycle()
-	a := moduloF64(x * math.Pi * 2 * op.getMult() + (float64(op.Phase) * math.Pi * 2 + op.getPhase() * math.Pi * 2), math.Pi * 2)
+	a := moduloF64(x*math.Pi*2*op.getMult()+(float64(op.Phase)*math.Pi*2+op.getPhase()*math.Pi*2), math.Pi*2)
 	if a >= (math.Pi * width * 2) {
 		return -1
 	}
@@ -484,7 +485,7 @@ func square(op *Operator, x float64) float64 {
 
 func rectSquare(op *Operator, x float64) float64 {
 	a := square(op, x)
-	if(a < 0) {
+	if a < 0 {
 		a = 0
 	}
 	return a
@@ -562,7 +563,7 @@ func quarterTriangle(op *Operator, x float64) float64 {
 }
 func squishedTriangle(op *Operator, x float64) float64 {
 	if sine(op, x) > 0 {
-		return math.Asin(math.Sin((x * op.getMult() * 4 * math.Pi)   + (float64(op.Phase) * math.Pi * 4 + (op.getPhase() * math.Pi * 4)) ))/ (math.Pi/2)
+		return math.Asin(math.Sin((x*op.getMult()*4*math.Pi)+(float64(op.Phase)*math.Pi*4+(op.getPhase()*math.Pi*4)))) / (math.Pi / 2)
 	}
 	return 0
 }
@@ -602,6 +603,7 @@ func cubedAbsSquiTri(op *Operator, x float64) float64 {
 }
 
 var lsfr = uint16(0b01001_1010_1011_1010)
+
 func lsfrShift() {
 	// lsfr = lsfr >> 1
 	lsfr = (lsfr << 1) | (((lsfr >> 13) ^ (lsfr >> 14)) & 1)
@@ -609,14 +611,14 @@ func lsfrShift() {
 
 func noise1bitLsfr(op *Operator, x float64) float64 {
 	lsfrShift()
-	return float64(lsfr & 1) * 2 - 1
+	return float64(lsfr&1)*2 - 1
 	//return (rand.Float64() * 2) - 1
 }
 
 func noise8bitLsfr(op *Operator, x float64) float64 {
 	lsfrShift()
 	//return float64(lsfr & 1) * 2 - 1
-	return float64(lsfr & 0xFF) / float64(0x7F) - 1
+	return float64(lsfr&0xFF)/float64(0x7F) - 1
 	//return (rand.Float64() * 2) - 1
 }
 
@@ -748,8 +750,7 @@ var Interpolations = []string{
 	"Cubic",
 }
 
-var volROM = [...]float64 {0.0, 0.00390625, 0.0078125, 0.01171875, 0.015625, 0.01953125, 0.0234375, 0.02734375, 0.03125, 0.03515625, 0.0390625, 0.04296875, 0.046875, 0.05078125, 0.0546875, 0.05859375, 0.0625, 0.06640625, 0.0703125, 0.07421875, 0.078125, 0.08203125, 0.0859375, 0.08984375, 0.09375, 0.09765625, 0.1015625, 0.10546875, 0.109375, 0.11328125, 0.1171875, 0.12109375, 0.125, 0.12890625, 0.1328125, 0.13671875, 0.140625, 0.14453125, 0.1484375, 0.15234375, 0.15625, 0.16015625, 0.1640625, 0.16796875, 0.171875, 0.17578125, 0.1796875, 0.18359375, 0.1875, 0.19140625, 0.1953125, 0.19921875, 0.203125, 0.20703125, 0.2109375, 0.21484375, 0.21875, 0.22265625, 0.2265625, 0.23046875, 0.234375, 0.23828125, 0.2421875, 0.24609375, 0.25, 0.25390625, 0.2578125, 0.26171875, 0.265625, 0.26953125, 0.2734375, 0.27734375, 0.28125, 0.28515625, 0.2890625, 0.29296875, 0.296875, 0.30078125, 0.3046875, 0.30859375, 0.3125, 0.31640625, 0.3203125, 0.32421875, 0.328125, 0.33203125, 0.3359375, 0.33984375, 0.34375, 0.34765625, 0.3515625, 0.35546875, 0.359375, 0.36328125, 0.3671875, 0.37109375, 0.375, 0.37890625, 0.3828125, 0.38671875, 0.390625, 0.39453125, 0.3984375, 0.40234375, 0.40625, 0.41015625, 0.4140625, 0.41796875, 0.421875, 0.42578125, 0.4296875, 0.43359375, 0.4375, 0.44140625, 0.4453125, 0.44921875, 0.453125, 0.45703125, 0.4609375, 0.46484375, 0.46875, 0.47265625, 0.4765625, 0.48046875, 0.484375, 0.48828125, 0.4921875, 0.49609375, 0.5, 0.50390625, 0.5078125, 0.51171875, 0.515625, 0.51953125, 0.5234375, 0.52734375, 0.53125, 0.53515625, 0.5390625, 0.54296875, 0.546875, 0.55078125, 0.5546875, 0.55859375, 0.5625, 0.56640625, 0.5703125, 0.57421875, 0.578125, 0.58203125, 0.5859375, 0.58984375, 0.59375, 0.59765625, 0.6015625, 0.60546875, 0.609375, 0.61328125, 0.6171875, 0.62109375, 0.625, 0.62890625, 0.6328125, 0.63671875, 0.640625, 0.64453125, 0.6484375, 0.65234375, 0.65625, 0.66015625, 0.6640625, 0.66796875, 0.671875, 0.67578125, 0.6796875, 0.68359375, 0.6875, 0.69140625, 0.6953125, 0.69921875, 0.703125, 0.70703125, 0.7109375, 0.71484375, 0.71875, 0.72265625, 0.7265625, 0.73046875, 0.734375, 0.73828125, 0.7421875, 0.74609375, 0.75, 0.75390625, 0.7578125, 0.76171875, 0.765625, 0.76953125, 0.7734375, 0.77734375, 0.78125, 0.78515625, 0.7890625, 0.79296875, 0.796875, 0.80078125, 0.8046875, 0.80859375, 0.8125, 0.81640625, 0.8203125, 0.82421875, 0.828125, 0.83203125, 0.8359375, 0.83984375, 0.84375, 0.84765625, 0.8515625, 0.85546875, 0.859375, 0.86328125, 0.8671875, 0.87109375, 0.875, 0.87890625, 0.8828125, 0.88671875, 0.890625, 0.89453125, 0.8984375, 0.90234375, 0.90625, 0.91015625, 0.9140625, 0.91796875, 0.921875, 0.92578125, 0.9296875, 0.93359375, 0.9375, 0.94140625, 0.9453125, 0.94921875, 0.953125, 0.95703125, 0.9609375, 0.96484375, 0.96875, 0.97265625, 0.9765625, 0.98046875, 0.984375, 0.98828125, 0.9921875, 1}
-
+var volROM = [...]float64{0.0, 0.00390625, 0.0078125, 0.01171875, 0.015625, 0.01953125, 0.0234375, 0.02734375, 0.03125, 0.03515625, 0.0390625, 0.04296875, 0.046875, 0.05078125, 0.0546875, 0.05859375, 0.0625, 0.06640625, 0.0703125, 0.07421875, 0.078125, 0.08203125, 0.0859375, 0.08984375, 0.09375, 0.09765625, 0.1015625, 0.10546875, 0.109375, 0.11328125, 0.1171875, 0.12109375, 0.125, 0.12890625, 0.1328125, 0.13671875, 0.140625, 0.14453125, 0.1484375, 0.15234375, 0.15625, 0.16015625, 0.1640625, 0.16796875, 0.171875, 0.17578125, 0.1796875, 0.18359375, 0.1875, 0.19140625, 0.1953125, 0.19921875, 0.203125, 0.20703125, 0.2109375, 0.21484375, 0.21875, 0.22265625, 0.2265625, 0.23046875, 0.234375, 0.23828125, 0.2421875, 0.24609375, 0.25, 0.25390625, 0.2578125, 0.26171875, 0.265625, 0.26953125, 0.2734375, 0.27734375, 0.28125, 0.28515625, 0.2890625, 0.29296875, 0.296875, 0.30078125, 0.3046875, 0.30859375, 0.3125, 0.31640625, 0.3203125, 0.32421875, 0.328125, 0.33203125, 0.3359375, 0.33984375, 0.34375, 0.34765625, 0.3515625, 0.35546875, 0.359375, 0.36328125, 0.3671875, 0.37109375, 0.375, 0.37890625, 0.3828125, 0.38671875, 0.390625, 0.39453125, 0.3984375, 0.40234375, 0.40625, 0.41015625, 0.4140625, 0.41796875, 0.421875, 0.42578125, 0.4296875, 0.43359375, 0.4375, 0.44140625, 0.4453125, 0.44921875, 0.453125, 0.45703125, 0.4609375, 0.46484375, 0.46875, 0.47265625, 0.4765625, 0.48046875, 0.484375, 0.48828125, 0.4921875, 0.49609375, 0.5, 0.50390625, 0.5078125, 0.51171875, 0.515625, 0.51953125, 0.5234375, 0.52734375, 0.53125, 0.53515625, 0.5390625, 0.54296875, 0.546875, 0.55078125, 0.5546875, 0.55859375, 0.5625, 0.56640625, 0.5703125, 0.57421875, 0.578125, 0.58203125, 0.5859375, 0.58984375, 0.59375, 0.59765625, 0.6015625, 0.60546875, 0.609375, 0.61328125, 0.6171875, 0.62109375, 0.625, 0.62890625, 0.6328125, 0.63671875, 0.640625, 0.64453125, 0.6484375, 0.65234375, 0.65625, 0.66015625, 0.6640625, 0.66796875, 0.671875, 0.67578125, 0.6796875, 0.68359375, 0.6875, 0.69140625, 0.6953125, 0.69921875, 0.703125, 0.70703125, 0.7109375, 0.71484375, 0.71875, 0.72265625, 0.7265625, 0.73046875, 0.734375, 0.73828125, 0.7421875, 0.74609375, 0.75, 0.75390625, 0.7578125, 0.76171875, 0.765625, 0.76953125, 0.7734375, 0.77734375, 0.78125, 0.78515625, 0.7890625, 0.79296875, 0.796875, 0.80078125, 0.8046875, 0.80859375, 0.8125, 0.81640625, 0.8203125, 0.82421875, 0.828125, 0.83203125, 0.8359375, 0.83984375, 0.84375, 0.84765625, 0.8515625, 0.85546875, 0.859375, 0.86328125, 0.8671875, 0.87109375, 0.875, 0.87890625, 0.8828125, 0.88671875, 0.890625, 0.89453125, 0.8984375, 0.90234375, 0.90625, 0.91015625, 0.9140625, 0.91796875, 0.921875, 0.92578125, 0.9296875, 0.93359375, 0.9375, 0.94140625, 0.9453125, 0.94921875, 0.953125, 0.95703125, 0.9609375, 0.96484375, 0.96875, 0.97265625, 0.9765625, 0.98046875, 0.984375, 0.98828125, 0.9921875, 1}
 
 func Clamp(low, val, high int) int {
 	if val < low {
@@ -765,20 +766,18 @@ func (op *Operator) getPhase() float64 {
 	macLen := SynthContext.MacLen
 
 	if !op.CustomPhaseEnv {
-	// Anti divide-by-0
-		if(macLen == 1) {
+		// Anti divide-by-0
+		if macLen == 1 {
 			macLen = 2
 		}
 		return (float64(macro) / float64(macLen-1)) * float64(op.Detune)
 	}
 
-	if(len(op.PhaseEnv) < 1) {
+	if len(op.PhaseEnv) < 1 {
 		return 0
 	}
-	return (float64(op.PhaseEnv[int(Clamp(0, int(macro), len(op.PhaseEnv) - 1))]) / 255.0) * float64(op.Detune)
+	return (float64(op.PhaseEnv[int(Clamp(0, int(macro), len(op.PhaseEnv)-1))]) / 255.0) * float64(op.Detune)
 }
-
-
 
 type Dest = int
 
@@ -787,13 +786,13 @@ const DestMorph Dest = 1
 const DestVolEnv Dest = 2
 const DestPhaseEnv Dest = 3
 
-func ApplyStringToWaveform(opId int,str string, destination Dest) {
+func ApplyStringToWaveform(opId int, str string, destination Dest) {
 	strArr := strings.Split(str, " ")
 	// println(*str)
 	bArr := make([]uint8, 0)
 	for _, v := range strArr {
 		p, err := strconv.ParseUint(v, 10, 8)
-		if(err == nil) {
+		if err == nil {
 			bArr = append(bArr, uint8(p))
 		} else {
 			println(err)
@@ -831,7 +830,7 @@ func moduloFix(a, b int) int {
 }
 
 func smooth(arr []float64) []float64 {
-	if(SynthContext.SmoothWin == 0) {
+	if SynthContext.SmoothWin == 0 {
 		return arr
 	}
 	out := make([]float64, len(arr))
@@ -858,15 +857,15 @@ func logicMod(x float64, modValue float64, opId int) float64 {
 	case 1: // OR
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
-		return (float64(a|b)/32767.5) - (1 * op.getVolume())
+		return (float64(a|b) / 32767.5) - (1 * op.getVolume())
 	case 2: // XOR
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
-		return (float64(a^b)/32767.5) - (1 * op.getVolume())
+		return (float64(a^b) / 32767.5) - (1 * op.getVolume())
 	case 3: // AND
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
-		return (float64(a&b)/32767.5) - (1 * op.getVolume())
+		return (float64(a&b) / 32767.5) - (1 * op.getVolume())
 	case 4: // NAND
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
@@ -933,7 +932,7 @@ func Normalize(wavetable []float64) []float64 {
 	waveMin, waveMax := minandmaxFloat(wavetable)
 	mult := math.Max(waveMin, waveMax)
 	for i := 0; i < len(wavetable); i++ {
-		wavetable[i] = wavetable[i] * 1/mult
+		wavetable[i] = wavetable[i] * 1 / mult
 	}
 	return wavetable
 }
@@ -951,23 +950,23 @@ func Synthesize() {
 	for x := 0; x < int(myLen*oversample); x++ {
 		myTmp[x] = (fm(float64(x)))
 	}
-	if(SynthContext.FilterEnabled) {
+	if SynthContext.FilterEnabled {
 		myTmp = filter(myTmp)
 	}
 
 	myTmp = smooth(myTmp)
 
-	if(SynthContext.Normalize) {
+	if SynthContext.Normalize {
 		myTmp = Normalize(myTmp)
 	} else {
 		for x := 0; x < len(myTmp); x++ {
-			myTmp[x] = ClampF64(-1, myTmp[x] * float64(SynthContext.Gain), 1)
+			myTmp[x] = ClampF64(-1, myTmp[x]*float64(SynthContext.Gain), 1)
 		}
 	}
 
 	myOut := make([]int, SynthContext.WaveLen)
 	tmpLen := len(myTmp)
-	
+
 	for c := 0; c < tmpLen; c += oversample {
 		res := 0.0
 		for i := 0; i < oversample; i++ {
@@ -975,11 +974,10 @@ func Synthesize() {
 		}
 		res = res / float64(oversample)
 		tmp := int(math.Round((res + 1) * (float64(SynthContext.WaveHei) / 2.0)))
-		myOut[c / oversample] = tmp
+		myOut[c/oversample] = tmp
 	}
 	WaveOutput = myOut
 }
-
 
 type LowPassFilter struct {
 	alpha, lastY float64
@@ -1051,11 +1049,11 @@ func (op *Operator) getFB() float64 {
 }
 
 func (op *Operator) getFB3() float64 {
-	return float64(op.Feedback) * (float64(op.Prev) / (op.getMult() / float64(SynthContext.WaveLen * SynthContext.Oversample)))
+	return float64(op.Feedback) * (float64(op.Prev) / (op.getMult() / float64(SynthContext.WaveLen*SynthContext.Oversample)))
 }
 
 func (op *Operator) getVolume() float64 {
-	if(!op.IsEnvelopeEnabled) {
+	if !op.IsEnvelopeEnabled {
 		return float64(op.Tl)
 	}
 	if op.UseCustomVolEnv {
@@ -1066,7 +1064,7 @@ func (op *Operator) getVolume() float64 {
 
 func (op *Operator) customEnv() float64 {
 	index := int(ClampF64(0.0, float64(SynthContext.Macro), float64(len(op.VolEnv))))
-	return (float64(op.Tl) * (volROM[op.VolEnv[Clamp(0, index, len(op.VolEnv) - 1)] & 0b11111111]))
+	return (float64(op.Tl) * (volROM[op.VolEnv[Clamp(0, index, len(op.VolEnv)-1)]&0b11111111]))
 }
 
 func (op *Operator) adsr() float64 {
@@ -1076,15 +1074,15 @@ func (op *Operator) adsr() float64 {
 		if op.Adsr.Attack <= 0 {
 			return float64(op.Tl)
 		}
-		return LinearInterpolation(0, 0, float64(op.Adsr.Attack), float64(op.Tl),float64(macro))
+		return LinearInterpolation(0, 0, float64(op.Adsr.Attack), float64(op.Tl), float64(macro))
 	}
 
 	// Decay and Sustain
-	if macro > op.Adsr.Attack && macro < (op.Adsr.Attack + op.Adsr.Decay) {
+	if macro > op.Adsr.Attack && macro < (op.Adsr.Attack+op.Adsr.Decay) {
 		if op.Adsr.Decay <= 0 {
 			return float64(op.Adsr.Sustain)
 		}
-		return LinearInterpolation(float64(op.Adsr.Attack), float64(op.Tl), float64(op.Adsr.Attack + op.Adsr.Decay), float64(op.Adsr.Sustain), float64(macro))
+		return LinearInterpolation(float64(op.Adsr.Attack), float64(op.Tl), float64(op.Adsr.Attack+op.Adsr.Decay), float64(op.Adsr.Sustain), float64(macro))
 	}
 	return float64(op.Adsr.Sustain)
 }
@@ -1096,26 +1094,25 @@ func (op *Operator) pwmAdsr() float64 {
 		if op.PwmAdsr.Attack <= 0 {
 			return float64(op.DutyCycle)
 		}
-		return LinearInterpolation(0, float64(op.PwmAdsr.Start), float64(op.PwmAdsr.Attack), float64(op.DutyCycle),float64(macro))
+		return LinearInterpolation(0, float64(op.PwmAdsr.Start), float64(op.PwmAdsr.Attack), float64(op.DutyCycle), float64(macro))
 	}
 
 	// Decay and Sustain
-	if macro > op.PwmAdsr.Attack && macro < (op.PwmAdsr.Attack + op.PwmAdsr.Decay) {
+	if macro > op.PwmAdsr.Attack && macro < (op.PwmAdsr.Attack+op.PwmAdsr.Decay) {
 		if op.PwmAdsr.Decay <= 0 {
 			return float64(op.PwmAdsr.Sustain)
 		}
-		return LinearInterpolation(float64(op.PwmAdsr.Attack), float64(op.DutyCycle), float64(op.PwmAdsr.Attack + op.PwmAdsr.Decay), float64(op.PwmAdsr.Sustain), float64(macro))
+		return LinearInterpolation(float64(op.PwmAdsr.Attack), float64(op.DutyCycle), float64(op.PwmAdsr.Attack+op.PwmAdsr.Decay), float64(op.PwmAdsr.Sustain), float64(macro))
 	}
 	return float64(op.PwmAdsr.Sustain)
 }
 
 func (op *Operator) getDutyCycle() float64 {
-	if(op.PwmAdsrEnabled) {
+	if op.PwmAdsrEnabled {
 		return op.pwmAdsr()
 	}
 	return float64(op.DutyCycle)
 }
-
 
 func LinearInterpolation(x1 float64, y1 float64, x2 float64, y2 float64, x float64) float64 {
 	slope := (y2 - y1) / (x2 - x1)
@@ -1129,15 +1126,15 @@ func adsrFilter() float64 {
 		if SynthContext.FilterAttack <= 0 {
 			return float64(SynthContext.Cutoff)
 		}
-		return LinearInterpolation(0, float64(SynthContext.FilterStart), float64(SynthContext.FilterAttack), float64(SynthContext.Cutoff),float64(macro))
+		return LinearInterpolation(0, float64(SynthContext.FilterStart), float64(SynthContext.FilterAttack), float64(SynthContext.Cutoff), float64(macro))
 	}
 
 	// Decay and Sustain
-	if macro > SynthContext.FilterAttack && macro < (SynthContext.FilterAttack + SynthContext.FilterDecay) {
+	if macro > SynthContext.FilterAttack && macro < (SynthContext.FilterAttack+SynthContext.FilterDecay) {
 		if SynthContext.FilterDecay <= 0 {
 			return float64(SynthContext.FilterSustain)
 		}
-		return LinearInterpolation(float64(SynthContext.FilterAttack), float64(SynthContext.Cutoff), float64(SynthContext.FilterAttack + SynthContext.FilterDecay), float64(SynthContext.FilterSustain), float64(macro))
+		return LinearInterpolation(float64(SynthContext.FilterAttack), float64(SynthContext.Cutoff), float64(SynthContext.FilterAttack+SynthContext.FilterDecay), float64(SynthContext.FilterSustain), float64(macro))
 	}
 	return float64(SynthContext.FilterSustain)
 }
@@ -1244,6 +1241,7 @@ func ApplyAlg(alg int) {
 }
 
 var WaveStr = ""
+
 func GenerateWaveStr() {
 	str := ""
 	for _, n := range WaveOutput {
@@ -1254,6 +1252,7 @@ func GenerateWaveStr() {
 }
 
 var WaveSeqStr = ""
+
 func GenerateWaveSeqStr() {
 	str := ""
 	tmpMac := SynthContext.Macro
@@ -1270,84 +1269,84 @@ func GenerateWaveSeqStr() {
 }
 
 type LowpassFilter struct {
-    sampleRate float64
-    cutoffFreq float64
-    resonance  float64
-    q          float64
-    gain       float64
-    a          []float64
-    b          []float64
-    x          []float64
-    y          []float64
+	sampleRate float64
+	cutoffFreq float64
+	resonance  float64
+	q          float64
+	gain       float64
+	a          []float64
+	b          []float64
+	x          []float64
+	y          []float64
 }
 
 func NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain float64) *LowpassFilter {
-    // Calculate filter coefficients
-    w0 := 2 * math.Pi * cutoffFreq / sampleRate
-    alpha := math.Sin(w0) / (2 * resonance)
-    cosw0 := math.Cos(w0)
-    a0 := 1 + alpha
-    a1 := -2 * cosw0 / a0
-    a2 := (1 - alpha) / a0
-    b0 := (1 - cosw0) / 2 / a0
-    b1 := (1 - cosw0) / a0
-    b2 := (1 - cosw0) / 2 / a0
-    
-    return &LowpassFilter{
-        sampleRate: sampleRate,
-        cutoffFreq: cutoffFreq,
-        resonance:  resonance,
-        q:          1 / (2 * resonance),
-        gain:       gain,
-        a:          []float64{-a1, -a2},
-        b:          []float64{b0, b1, b2},
-        x:          make([]float64, 4),
-        y:          make([]float64, 4),
-    }
+	// Calculate filter coefficients
+	w0 := 2 * math.Pi * cutoffFreq / sampleRate
+	alpha := math.Sin(w0) / (2 * resonance)
+	cosw0 := math.Cos(w0)
+	a0 := 1 + alpha
+	a1 := -2 * cosw0 / a0
+	a2 := (1 - alpha) / a0
+	b0 := (1 - cosw0) / 2 / a0
+	b1 := (1 - cosw0) / a0
+	b2 := (1 - cosw0) / 2 / a0
+
+	return &LowpassFilter{
+		sampleRate: sampleRate,
+		cutoffFreq: cutoffFreq,
+		resonance:  resonance,
+		q:          1 / (2 * resonance),
+		gain:       gain,
+		a:          []float64{-a1, -a2},
+		b:          []float64{b0, b1, b2},
+		x:          make([]float64, 4),
+		y:          make([]float64, 4),
+	}
 }
 
 func (lpf *LowpassFilter) Process(x float64) float64 {
-    // Shift input and output samples
-    lpf.x[3] = lpf.x[2]
-    lpf.x[2] = lpf.x[1]
-    lpf.x[1] = lpf.x[0]
-    lpf.x[0] = x / lpf.gain
+	// Shift input and output samples
+	lpf.x[3] = lpf.x[2]
+	lpf.x[2] = lpf.x[1]
+	lpf.x[1] = lpf.x[0]
+	lpf.x[0] = x / lpf.gain
 
-    lpf.y[3] = lpf.y[2]
-    lpf.y[2] = lpf.y[1]
-    lpf.y[1] = lpf.y[0]
+	lpf.y[3] = lpf.y[2]
+	lpf.y[2] = lpf.y[1]
+	lpf.y[1] = lpf.y[0]
 
-    // Apply filter
-    lpf.y[0] = (lpf.b[0]*lpf.x[0] + lpf.b[1]*lpf.x[1] + lpf.b[2]*lpf.x[2] -
-        lpf.a[1]*lpf.y[1] - lpf.a[2]*lpf.y[2]) / lpf.a[0]
+	// Apply filter
+	lpf.y[0] = (lpf.b[0]*lpf.x[0] + lpf.b[1]*lpf.x[1] + lpf.b[2]*lpf.x[2] -
+		lpf.a[1]*lpf.y[1] - lpf.a[2]*lpf.y[2]) / lpf.a[0]
 
-    lpf.x[3] = lpf.x[2]
-    lpf.x[2] = lpf.x[1]
-    lpf.x[1] = lpf.x[0]
-    lpf.y[3] = lpf.y[2]
-    lpf.y[2] = lpf.y[1]
-    lpf.y[1] = lpf.y[0]
+	lpf.x[3] = lpf.x[2]
+	lpf.x[2] = lpf.x[1]
+	lpf.x[1] = lpf.x[0]
+	lpf.y[3] = lpf.y[2]
+	lpf.y[2] = lpf.y[1]
+	lpf.y[1] = lpf.y[0]
 
-    return lpf.y[0] * lpf.gain
+	return lpf.y[0] * lpf.gain
 }
 
 func lowpassFiltering222(cutoffFreq float64, resonance float64, sampleRate float64, input []float64) []float64 {
 	gain := 1.0
-    lpf := NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain)
-    output := make([]float64, len(input))
+	lpf := NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain)
+	output := make([]float64, len(input))
 
-    for i := 0; i < len(input); i++ {
-        output[i] = lpf.Process(input[i])
-    }
+	for i := 0; i < len(input); i++ {
+		output[i] = lpf.Process(input[i])
+	}
 
-    return output
+	return output
 }
 
 type ButterworthFilter struct {
-	xn     [2]float64
-	yn     [2]float64
-	a      [3]float64
-	b      [3]float64
+	xn [2]float64
+	yn [2]float64
+	a  [3]float64
+	b  [3]float64
 }
 
 func NewButterworthFilter(cutoff, sampleRate, resonance float64) *ButterworthFilter {
@@ -1380,10 +1379,9 @@ func (bwf *ButterworthFilter) Filter(sample float64) float64 {
 	return bwf.yn[1]
 }
 
-
 // Apply a lowpass filter to the input wavetable and return the filtered wavetable.
 func lowpassFiltering(cutoff float64, resonance float64, pitch float64, wavetable []float64) []float64 {
-    sampleRate := float64(len(wavetable)) / pitch
+	sampleRate := float64(len(wavetable)) / pitch
 	filter := NewButterworthFilter(cutoff, sampleRate, resonance)
 	filtered := make([]float64, len(wavetable))
 	for i := 0; i < len(wavetable); i++ {
@@ -1395,36 +1393,34 @@ func lowpassFiltering(cutoff float64, resonance float64, pitch float64, wavetabl
 	return filtered
 }
 
-
-
 func lowpassFiltering2(cutoffFrequency float64, resonance float64, sampleRate float64, input []float64) []float64 {
-    // Calculate filter coefficients
+	// Calculate filter coefficients
 	sampleRate = float64(len(input)) * sampleRate
-	
+
 	omegaC := 2.0 * math.Pi * cutoffFrequency / sampleRate
-    s := math.Sin(omegaC)
-    alpha := s / (2.0 * math.Sqrt(2.0))
-    beta := 1.0 - alpha
+	s := math.Sin(omegaC)
+	alpha := s / (2.0 * math.Sqrt(2.0))
+	beta := 1.0 - alpha
 
-    // Initialize filter state variables
-    x1 := 0.0
-    x2 := 0.0
-    y1 := 0.0
-    y2 := 0.0
+	// Initialize filter state variables
+	x1 := 0.0
+	x2 := 0.0
+	y1 := 0.0
+	y2 := 0.0
 
-    // Apply filter to input signal
-    output := make([]float64, len(input))
-    for i := range input {
-        x0 := input[i] - resonance*y1
-        y0 := alpha*(x0+x2) + beta*y1 + alpha*y2
-        x2 = x1
-        x1 = x0
-        y2 = y1
-        y1 = y0
-        output[i] = y0
-    }
+	// Apply filter to input signal
+	output := make([]float64, len(input))
+	for i := range input {
+		x0 := input[i] - resonance*y1
+		y0 := alpha*(x0+x2) + beta*y1 + alpha*y2
+		x2 = x1
+		x1 = x0
+		y2 = y1
+		y1 = y0
+		output[i] = y0
+	}
 
-    return output
+	return output
 }
 
 func notetofreq(n float64) float64 {
@@ -1432,89 +1428,89 @@ func notetofreq(n float64) float64 {
 }
 
 type biquadFilter struct {
-	order int
-	a0, a1, a2, b1, b2 float64 // Factors
+	order                     int
+	a0, a1, a2, b1, b2        float64 // Factors
 	filterCutoff, Q, peakGain float64 // Cutoff, Q, and peak gain
-	z1, z2 float64 // poles
-	A, w0, w1, w2, d1, d2 []float64
-	ep float64
+	z1, z2                    float64 // poles
+	A, w0, w1, w2, d1, d2     []float64
+	ep                        float64
 }
 
 func buildBQFilter(cutoff float64) *biquadFilter {
 	filter := new(biquadFilter)
 	filter.order = 4
-	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen * SynthContext.Oversample)
+	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
 	var norm float64
-	K := math.Tan(math.Pi * cutoff/sampleRate)
+	K := math.Tan(math.Pi * cutoff / sampleRate)
 	switch SynthContext.FilterType {
 	case 0: // LPF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
-			norm = 1 / (1 + K / float64(SynthContext.Resonance) + K*K)
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
 		}
 		filter.a0 = K * K * norm
 		filter.a1 = 2 * filter.a0
 		filter.a2 = filter.a0
-		filter.b1 = 2 * (K * K - 1) * norm
+		filter.b1 = 2 * (K*K - 1) * norm
 		if SynthContext.Resonance == 0 {
 			filter.b2 = 0
 		} else {
-			filter.b2 = (1 - K / float64(SynthContext.Resonance) + K * K) * norm
-		} 
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
+		}
 	case 1: // HPF BQ
-	if SynthContext.Resonance == 0 {
+		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
-			norm = 1 / (1 + K / float64(SynthContext.Resonance) + K*K)
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
 		}
 		filter.a0 = 1 * norm
 		filter.a1 = -2 * filter.a0
 		filter.a2 = filter.a0
-		filter.b1 = 2 * (K * K - 1) * norm
+		filter.b1 = 2 * (K*K - 1) * norm
 		if SynthContext.Resonance == 0 {
 			filter.b2 = 0
 		} else {
-			filter.b2 = (1 - K / float64(SynthContext.Resonance) + K * K) * norm
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
 	case 2: // BPF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
-			norm = 1 / (1 + K / float64(SynthContext.Resonance) + K*K)
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
 		}
 		filter.a0 = K / float64(SynthContext.Resonance) * norm
 		filter.a1 = 0
 		filter.a2 = -filter.a0
-		filter.b1 = 2 * (K * K - 1) * norm
+		filter.b1 = 2 * (K*K - 1) * norm
 		if SynthContext.Resonance == 0 {
 			filter.b2 = 0
 		} else {
-			filter.b2 = (1 - K / float64(SynthContext.Resonance) + K * K) * norm
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
 	case 3: // BSF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
-			norm = 1 / (1 + K / float64(SynthContext.Resonance) + K*K)
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
 		}
-		filter.a0 = (1 + K * K) * norm
-		filter.a1 = 2 * (K * K - 1) * norm
+		filter.a0 = (1 + K*K) * norm
+		filter.a1 = 2 * (K*K - 1) * norm
 		filter.a2 = filter.a0
 		filter.b1 = filter.a1
 		if SynthContext.Resonance == 0 {
 			filter.b2 = 0
 		} else {
-			filter.b2 = (1 - K / float64(SynthContext.Resonance) + K * K) * norm
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
 	case 4: // AP BQ
 		aa := (K - 1.0) / (K + 1.0)
-		bb := -math.Cos(math.Pi * cutoff/sampleRate)
+		bb := -math.Cos(math.Pi * cutoff / sampleRate)
 		filter.a0 = -aa
-		filter.a1 = bb*(1.0 - aa)
+		filter.a1 = bb * (1.0 - aa)
 		filter.a2 = 1.0
 		filter.b1 = filter.a1
-    	filter.b2 = filter.a0
+		filter.b2 = filter.a0
 	}
 	return filter
 }
@@ -1522,35 +1518,35 @@ func buildBQFilter(cutoff float64) *biquadFilter {
 const preWarm = 8
 
 func (bqFilter *biquadFilter) processBQFilter(x float64) float64 {
-	output := x * bqFilter.a0 + bqFilter.z1
-	bqFilter.z1 = x * bqFilter.a1 + bqFilter.z2 - bqFilter.b1 * output
-	bqFilter.z2 = x * bqFilter.a2 - bqFilter.b2 * output
+	output := x*bqFilter.a0 + bqFilter.z1
+	bqFilter.z1 = x*bqFilter.a1 + bqFilter.z2 - bqFilter.b1*output
+	bqFilter.z2 = x*bqFilter.a2 - bqFilter.b2*output
 	return output
 }
 
 func filter(wavetable []float64) []float64 {
-	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen * SynthContext.Oversample)
-	
+	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
+
 	myCutoff := float64(SynthContext.Cutoff)
-	if(SynthContext.FilterAdsrEnabled) {
+	if SynthContext.FilterAdsrEnabled {
 		myCutoff = adsrFilter()
 	}
-	
-	filterCutoff := 5 * math.Pow(10, float64(myCutoff) * 3);
-	filterCutoff = math.Min(sampleRate/2,filterCutoff);
-	
+
+	filterCutoff := 5 * math.Pow(10, float64(myCutoff)*3)
+	filterCutoff = math.Min(sampleRate/2, filterCutoff)
+
 	filter := buildBQFilter(filterCutoff)
 	outWave := make([]float64, len(wavetable))
-	for i := 0; i < len(wavetable) * preWarm; i++ {
-		filter.processBQFilter(wavetable[i % len(wavetable)])
+	for i := 0; i < len(wavetable)*preWarm; i++ {
+		filter.processBQFilter(wavetable[i%len(wavetable)])
 	}
 	for i := 0; i < len(wavetable); i++ {
-		outWave[i] = filter.processBQFilter(wavetable[i % len(wavetable)])
+		outWave[i] = filter.processBQFilter(wavetable[i%len(wavetable)])
 	}
 	return outWave
 }
 
-var FilterTypes = []string {
+var FilterTypes = []string{
 	"Biquad Lowpass",
 	"Biquad Highpass",
 	"Biquad Bandpass",
@@ -1562,14 +1558,13 @@ func CreateFTIN163(macro bool) error {
 	tmpLen := SynthContext.WaveLen
 	tmpHei := SynthContext.WaveHei
 
-	if(tmpLen > 240) {
+	if tmpLen > 240 {
 		SynthContext.WaveLen = 240
 	}
-	if(tmpHei > 15) {
+	if tmpHei > 15 {
 		SynthContext.WaveHei = 15
 	}
 	Synthesize()
-
 
 	fpath, errZen := zenity.SelectFileSave(
 		zenity.ConfirmOverwrite(),
@@ -1577,28 +1572,28 @@ func CreateFTIN163(macro bool) error {
 		zenity.FileFilters{
 			{".fti files", []string{"*.fti"}, false},
 		})
-	if(errZen == zenity.ErrCanceled) {
+	if errZen == zenity.ErrCanceled {
 		return errZen
 	}
 	if !strings.HasSuffix(fpath, ".fti") {
-        fpath += ".fti"
-    }
+		fpath += ".fti"
+	}
 	file, err := os.Create(fpath)
 	name := filepath.Base(fpath)
 	name = name[:len(name)-len(filepath.Ext(fpath))]
-	if (len(name) > 127) {
+	if len(name) > 127 {
 		name = name[:127]
 	}
 
 	// It's time to build the FUW file!!
-	output := []byte {
-		'F','T','I','2','.','4', // Header
-		0x05, // Instrument type (N163 here)
+	output := []byte{
+		'F', 'T', 'I', '2', '.', '4', // Header
+		0x05,                     // Instrument type (N163 here)
 		byte(len(name)), 0, 0, 0, // Length of name string
 	}
 
 	for _, character := range name {
-		output = append(output, byte(character & 0xFF))
+		output = append(output, byte(character&0xFF))
 	}
 
 	output = append(output, 0x05) // I dunno what it is
@@ -1609,12 +1604,12 @@ func CreateFTIN163(macro bool) error {
 	output = append(output, 0x00)
 
 	waveMacroEnabled := byte(0)
-	if(macro) {
+	if macro {
 		waveMacroEnabled = 1
 	}
 	output = append(output, waveMacroEnabled) // We enable waveform envelope!
 
-	if(macro) {
+	if macro {
 		macroLen := int(math.Min(float64(SynthContext.MacLen), 64))
 		output = append(output, byte(macroLen))
 
@@ -1634,8 +1629,6 @@ func CreateFTIN163(macro bool) error {
 		output = append(output, 0x00)
 		output = append(output, 0x00)
 		output = append(output, 0x00)
-
-		
 
 		for i := 0; i < macroLen; i++ {
 			output = append(output, byte(i))
@@ -1660,7 +1653,7 @@ func CreateFTIN163(macro bool) error {
 			Synthesize()
 
 			for _, sample := range WaveOutput {
-				output = append(output, byte(sample & 0x0F))
+				output = append(output, byte(sample&0x0F))
 			}
 		}
 		SynthContext.Macro = tmpMacro
@@ -1679,7 +1672,7 @@ func CreateFTIN163(macro bool) error {
 		output = append(output, 0x00)
 		output = append(output, 0x00)
 		for _, sample := range WaveOutput {
-			output = append(output, byte(sample & 0x0F))
+			output = append(output, byte(sample&0x0F))
 		}
 	}
 	SynthContext.WaveLen = tmpLen
@@ -1688,10 +1681,10 @@ func CreateFTIN163(macro bool) error {
 
 	i, err := file.Write(output)
 	i = int(i)
-    if err != nil {
-        return err
-    }
-    return nil
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 const FURNACE_FORMAT_VER uint16 = 143
@@ -1703,25 +1696,25 @@ func CreateFUW() error {
 		zenity.FileFilters{
 			{".fuw files", []string{"*.fuw"}, false},
 		})
-	if(errZen == zenity.ErrCanceled) {
+	if errZen == zenity.ErrCanceled {
 		return errZen
 	}
 	if !strings.HasSuffix(fpath, ".fuw") {
-        fpath += ".fuw"
-    }
+		fpath += ".fuw"
+	}
 	file, err := os.Create(fpath)
 
-	var size uint32 = 1 + 4 + 4 + 4 +uint32(4 * len(WaveOutput)) 
+	var size uint32 = 1 + 4 + 4 + 4 + uint32(4*len(WaveOutput))
 	const HEADER_SIZE = 16 + 2 + 2 + 4 + 4 + 1 + 4 + 4 + 4
 
 	// It's time to build the FUW file!!
-	output := []byte {
-		'-','F','u','r','n','a','c','e',' ','w','a','v','e','t','a','-', // Header, 16 bytes
+	output := []byte{
+		'-', 'F', 'u', 'r', 'n', 'a', 'c', 'e', ' ', 'w', 'a', 'v', 'e', 't', 'a', '-', // Header, 16 bytes
 		byte(FURNACE_FORMAT_VER & 0xFF), byte(FURNACE_FORMAT_VER >> 8), // Format version, 2 bytes
 		'0', '0', // Reserved, 2 bytes
-		'W','A','V','E', // WAVE chunk, 4 bytes
+		'W', 'A', 'V', 'E', // WAVE chunk, 4 bytes
 		byte(size & 0xFF), byte((size >> 8) & 0xFF), byte((size >> 16) & 0xFF), byte((size >> 24)), // Size of chunk, 4 bytes
-		0, //empty string, 1 byte
+		0,                                                                                                                                                          //empty string, 1 byte
 		byte(SynthContext.WaveLen & 0xFF), byte((SynthContext.WaveLen >> 8) & 0xFF), byte((SynthContext.WaveLen >> 16) & 0xFF), byte((SynthContext.WaveLen >> 24)), // Wave length, 4 bytes
 		0, 0, 0, 0, // Reserved, 4 bytes
 		byte(SynthContext.WaveHei & 0xFF), byte((SynthContext.WaveHei >> 8) & 0xFF), byte((SynthContext.WaveHei >> 16) & 0xFF), byte((SynthContext.WaveHei >> 24)), // Wave height, 4 bytes
@@ -1729,29 +1722,29 @@ func CreateFUW() error {
 
 	// Appending Data
 	for _, sample := range WaveOutput {
-		output = append(output, byte(sample & 0xFF))
-		output = append(output, byte((sample >> 8) & 0xFF))
-		output = append(output, byte((sample >> 16) & 0xFF))
-		output = append(output, byte(sample >> 24))
+		output = append(output, byte(sample&0xFF))
+		output = append(output, byte((sample>>8)&0xFF))
+		output = append(output, byte((sample>>16)&0xFF))
+		output = append(output, byte(sample>>24))
 	}
 
 	i, err := file.Write(output)
 	i = int(i)
-    if err != nil {
-        return err
-    }
-    return nil
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func getSampleRate() int {
-    return int(math.Floor((440 * float64(len(WaveOutput))) / 2.0))
+	return int(math.Floor((440 * float64(len(WaveOutput))) / 2.0))
 }
 
 func createWavNew(path string, macro bool, bits16 bool) error {
 	file, err := os.Create(path)
 
 	var frames = 1
-	if(macro) {
+	if macro {
 		frames = int(SynthContext.MacLen)
 	}
 
@@ -1761,14 +1754,14 @@ func createWavNew(path string, macro bool, bits16 bool) error {
 	}
 
 	chunkSize := 0
-	if(bits16) {
-		chunkSize = 36 + (len(WaveOutput) * frames) * 2
+	if bits16 {
+		chunkSize = 36 + (len(WaveOutput)*frames)*2
 	} else {
 		chunkSize = 36 + (len(WaveOutput) * frames)
 	}
 
 	subchunkSize := 0
-	if(bits16) {
+	if bits16 {
 		subchunkSize = (len(WaveOutput) * frames) * 2
 	} else {
 		subchunkSize = (len(WaveOutput) * frames)
@@ -1776,7 +1769,7 @@ func createWavNew(path string, macro bool, bits16 bool) error {
 
 	sampleRate := getSampleRate()
 	byteRate := 0
-	if(bits16) {
+	if bits16 {
 		byteRate = (sampleRate * 16) / 8
 	} else {
 		byteRate = sampleRate
@@ -1784,79 +1777,77 @@ func createWavNew(path string, macro bool, bits16 bool) error {
 
 	intBuffer := []byte{
 		0x52, 0x49, 0x46, 0x46, // ChunkID: "RIFF" in ASCII form, big endian
-		byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later, 
+		byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later,
 		0x57, 0x41, 0x56, 0x45, // Format: "WAVE" in ASCII form
 		0x66, 0x6d, 0x74, 0x20, // Subchunk1ID: "fmt " in ASCII form
 		0x10, 0x00, 0x00, 0x00, // Subchunk1Size: 16 for PCM
-		0x01, 0x00,             // AudioFormat: PCM = 1
-		0x01, 0x00,             // NumChannels: Mono = 1
+		0x01, 0x00, // AudioFormat: PCM = 1
+		0x01, 0x00, // NumChannels: Mono = 1
 		byte(sampleRate & 0xFF), byte((sampleRate >> 8) & 0xFF), byte((sampleRate >> 16) & 0xFF), byte(sampleRate >> 24), // SampleRate: 44100 Hz - little endian
 		byte(byteRate & 0xFF), byte((byteRate >> 8) & 0xFF), byte((byteRate >> 16) & 0xFF), byte(byteRate >> 24), // ByteRate: 44100 * 1 * 16 / 8 - little endian
-		byte(bits / 8), 0x00,             // BlockAlign: 1 * 16 / 8 - little endian
-		bits, 0x00,             // BitsPerSample: 16 bits per sample
+		byte(bits / 8), 0x00, // BlockAlign: 1 * 16 / 8 - little endian
+		bits, 0x00, // BitsPerSample: 16 bits per sample
 		0x64, 0x61, 0x74, 0x61, // Subchunk2ID: "data" in ASCII form
 		byte(subchunkSize & 0xFF), byte((subchunkSize >> 8) & 0xFF), byte((subchunkSize >> 16) & 0xFF), byte(subchunkSize >> 24), // Subchunk2Size - will be filled later
 	}
 
 	_, err = file.Write(intBuffer)
-	if(err != nil) {
+	if err != nil {
 		return err
 	}
 
-		if(macro) {
-			tmpMac := SynthContext.Macro
-			for i := 0; i < int(SynthContext.MacLen); i++ {
-				SynthContext.Macro = int32(i)
-				Synthesize()
-
-				for _, sample := range WaveOutput {
-					var tmp float64;	
-						if (SynthContext.WaveHei & 0x0001) == 1 {
-							tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
-						} else {
-							tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
-						}
-					if(bits16) {
-
-						myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
-						b1 := byte(myOut & 0xFF)
-						b2 := byte(myOut >> 8)
-						file.Write([]byte{b1, b2})
-						continue
-					}
-
-					myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
-					file.Write([]byte{byte(myOut)})
-
-				}
-			}
-			SynthContext.Macro = tmpMac
+	if macro {
+		tmpMac := SynthContext.Macro
+		for i := 0; i < int(SynthContext.MacLen); i++ {
+			SynthContext.Macro = int32(i)
 			Synthesize()
-		} else {
-			for _, sample := range WaveOutput {
-				var tmp float64;	
-					if (SynthContext.WaveHei & 0x0001) == 1 {
-						tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
-					} else {
-						tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
-					}
-				if(bits16) {
 
-					myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
+			for _, sample := range WaveOutput {
+				var tmp float64
+				if (SynthContext.WaveHei & 0x0001) == 1 {
+					tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
+				} else {
+					tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
+				}
+				if bits16 {
+
+					myOut := int16(math.Round((tmp - 1) * float64((1<<(16-1))-1)))
 					b1 := byte(myOut & 0xFF)
 					b2 := byte(myOut >> 8)
 					file.Write([]byte{b1, b2})
 					continue
 				}
 
-				myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
+				myOut := int16(math.Round((tmp - 0) * float64((1<<(8-1))-1)))
 				file.Write([]byte{byte(myOut)})
+
 			}
 		}
+		SynthContext.Macro = tmpMac
+		Synthesize()
+	} else {
+		for _, sample := range WaveOutput {
+			var tmp float64
+			if (SynthContext.WaveHei & 0x0001) == 1 {
+				tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
+			} else {
+				tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
+			}
+			if bits16 {
+
+				myOut := int16(math.Round((tmp - 1) * float64((1<<(16-1))-1)))
+				b1 := byte(myOut & 0xFF)
+				b2 := byte(myOut >> 8)
+				file.Write([]byte{b1, b2})
+				continue
+			}
+
+			myOut := int16(math.Round((tmp - 0) * float64((1<<(8-1))-1)))
+			file.Write([]byte{byte(myOut)})
+		}
+	}
 	return nil
 }
-
-	
 
 func createWav(path string, macro bool, bits16 bool) error {
 	file, err := os.Create(path)
@@ -1868,7 +1859,7 @@ func createWav(path string, macro bool, bits16 bool) error {
 	}
 
 	var frames = 1
-	if(macro) {
+	if macro {
 		frames = int(SynthContext.MacLen)
 	}
 
@@ -1878,14 +1869,14 @@ func createWav(path string, macro bool, bits16 bool) error {
 	}
 
 	chunkSize := 0
-	if(bits16) {
-		chunkSize = 36 + (bufLen * frames) * 2
+	if bits16 {
+		chunkSize = 36 + (bufLen*frames)*2
 	} else {
 		chunkSize = 36 + (bufLen * frames)
 	}
 
 	subchunkSize := 0
-	if(bits16) {
+	if bits16 {
 		subchunkSize = (bufLen * frames) * 2
 	} else {
 		subchunkSize = (bufLen * frames)
@@ -1893,7 +1884,7 @@ func createWav(path string, macro bool, bits16 bool) error {
 
 	sampleRate := getSampleRate()
 	byteRate := 0
-	if(bits16) {
+	if bits16 {
 		byteRate = (sampleRate * 16) / 8
 	} else {
 		byteRate = sampleRate
@@ -1901,38 +1892,38 @@ func createWav(path string, macro bool, bits16 bool) error {
 
 	intBuffer := []byte{
 		0x52, 0x49, 0x46, 0x46, // ChunkID: "RIFF" in ASCII form, big endian
-		byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later, 
+		byte(chunkSize & 0xFF), byte((chunkSize >> 8) & 0xFF), byte((chunkSize >> 16) & 0xFF), byte(chunkSize >> 24), // ChunkSize - will be filled later,
 		0x57, 0x41, 0x56, 0x45, // Format: "WAVE" in ASCII form
 		0x66, 0x6d, 0x74, 0x20, // Subchunk1ID: "fmt " in ASCII form
 		0x10, 0x00, 0x00, 0x00, // Subchunk1Size: 16 for PCM
-		0x01, 0x00,             // AudioFormat: PCM = 1
-		0x01, 0x00,             // NumChannels: Mono = 1
+		0x01, 0x00, // AudioFormat: PCM = 1
+		0x01, 0x00, // NumChannels: Mono = 1
 		byte(sampleRate & 0xFF), byte((sampleRate >> 8) & 0xFF), byte((sampleRate >> 16) & 0xFF), byte(sampleRate >> 24), // SampleRate: 44100 Hz - little endian
 		byte(byteRate & 0xFF), byte((byteRate >> 8) & 0xFF), byte((byteRate >> 16) & 0xFF), byte(byteRate >> 24), // ByteRate: 44100 * 1 * 16 / 8 - little endian
-		byte(bits / 8), 0x00,             // BlockAlign: 1 * 16 / 8 - little endian
-		bits, 0x00,             // BitsPerSample: 16 bits per sample
+		byte(bits / 8), 0x00, // BlockAlign: 1 * 16 / 8 - little endian
+		bits, 0x00, // BitsPerSample: 16 bits per sample
 		0x64, 0x61, 0x74, 0x61, // Subchunk2ID: "data" in ASCII form
 		byte(subchunkSize & 0xFF), byte((subchunkSize >> 8) & 0xFF), byte((subchunkSize >> 16) & 0xFF), byte(subchunkSize >> 24), // Subchunk2Size - will be filled later
 	}
 
-    var output []uint8
-    if macro {
-        tmpMac := SynthContext.Macro
-        for i := 0; i < int(SynthContext.MacLen); i++ {
-            SynthContext.Macro = int32(i)
+	var output []uint8
+	if macro {
+		tmpMac := SynthContext.Macro
+		for i := 0; i < int(SynthContext.MacLen); i++ {
+			SynthContext.Macro = int32(i)
 			Synthesize()
-            for _, sample := range WaveOutput {
-				var tmp float64;
-				if(bits16) {
+			for _, sample := range WaveOutput {
+				var tmp float64
+				if bits16 {
 
 					if (SynthContext.WaveHei & 0x0001) == 1 {
 						tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
 					} else {
 						tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
 					}
-					myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
-					output = append(output, byte(myOut & 0xFF))
-					output = append(output, byte(myOut >> 8))
+					myOut := int16(math.Round((tmp - 1) * float64((1<<(16-1))-1)))
+					output = append(output, byte(myOut&0xFF))
+					output = append(output, byte(myOut>>8))
 					continue
 				}
 				if (SynthContext.WaveHei & 0x0001) == 1 {
@@ -1940,25 +1931,25 @@ func createWav(path string, macro bool, bits16 bool) error {
 				} else {
 					tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
 				}
-				myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
-				output = append(output, byte(myOut))                
-            }
-        }
+				myOut := int16(math.Round((tmp - 0) * float64((1<<(8-1))-1)))
+				output = append(output, byte(myOut))
+			}
+		}
 		SynthContext.Macro = tmpMac
 		Synthesize()
-    } else {
-        for _, sample := range WaveOutput {
-			var tmp float64;
-			if(bits16) {
+	} else {
+		for _, sample := range WaveOutput {
+			var tmp float64
+			if bits16 {
 
 				if (SynthContext.WaveHei & 0x0001) == 1 {
 					tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
 				} else {
 					tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
 				}
-				myOut := int16(math.Round((tmp-1)*float64((1<<(16-1))-1)))
-				output = append(output, byte(myOut & 0xFF))
-				output = append(output, byte(myOut >> 8))
+				myOut := int16(math.Round((tmp - 1) * float64((1<<(16-1))-1)))
+				output = append(output, byte(myOut&0xFF))
+				output = append(output, byte(myOut>>8))
 				continue
 			}
 			if (SynthContext.WaveHei & 0x0001) == 1 {
@@ -1966,21 +1957,21 @@ func createWav(path string, macro bool, bits16 bool) error {
 			} else {
 				tmp = float64(sample) / (float64(SynthContext.WaveHei) / 2.0)
 			}
-			myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
-			output = append(output, byte(myOut))                
+			myOut := int16(math.Round((tmp - 0) * float64((1<<(8-1))-1)))
+			output = append(output, byte(myOut))
 		}
-    }
+	}
 
-    for _, sample := range output {
-        intBuffer = append(intBuffer, sample)
-    }
+	for _, sample := range output {
+		intBuffer = append(intBuffer, sample)
+	}
 
-    i, err := file.Write(intBuffer)
+	i, err := file.Write(intBuffer)
 	i = int(i)
-    if err != nil {
-        return err
-    }
-    return nil
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func SaveRaw(macro bool, mode int) error {
@@ -1990,20 +1981,20 @@ func SaveRaw(macro bool, mode int) error {
 		zenity.FileFilters{
 			{".raw files", []string{"*.raw"}, false},
 		})
-	if(errZen == zenity.ErrCanceled) {
+	if errZen == zenity.ErrCanceled {
 		return errZen
 	}
 	if !strings.HasSuffix(path, ".raw") {
-        path += ".raw"
-    }
+		path += ".raw"
+	}
 
 	file, err := os.Create(path)
-	if(err != nil) {
+	if err != nil {
 		return err
 	}
 
-	if(mode == 2) {
-		if(len(WaveOutput) & 1 > 0) {
+	if mode == 2 {
+		if len(WaveOutput)&1 > 0 {
 			zenity.Error("Only an even length is accepted for 4-bits export.")
 			return nil
 		}
@@ -2015,31 +2006,31 @@ func SaveRaw(macro bool, mode int) error {
 	}
 	var output []byte
 	if macro {
-        tmpMac := SynthContext.Macro
-        for i := 0; i < int(SynthContext.MacLen); i++ {
-            SynthContext.Macro = int32(i)
+		tmpMac := SynthContext.Macro
+		for i := 0; i < int(SynthContext.MacLen); i++ {
+			SynthContext.Macro = int32(i)
 			Synthesize()
-			if(mode == 2) {
+			if mode == 2 {
 				for i := 0; i < len(WaveOutput); i += 2 {
 					var tmp1 float64
 					var tmp2 float64
 					if (SynthContext.WaveHei & 0x0001) == 1 {
 						tmp1 = float64(WaveOutput[i]) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
-						tmp2 = float64(WaveOutput[i + 1]) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
+						tmp2 = float64(WaveOutput[i+1]) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
 					} else {
 						tmp1 = float64(WaveOutput[i]) / (float64(SynthContext.WaveHei) / 2.0)
-						tmp2 = float64(WaveOutput[i + 1]) / (float64(SynthContext.WaveHei) / 2.0)
+						tmp2 = float64(WaveOutput[i+1]) / (float64(SynthContext.WaveHei) / 2.0)
 					}
-					
-					myOut1 := int16(math.Round((tmp1-0)*float64((1<<(4-1))-1)))
-					myOut2 := int16(math.Round((tmp2-0)*float64((1<<(4-1))-1)))
-					output = append(output, byte((myOut1 >> 4) | myOut2 & 0xF))
+
+					myOut1 := int16(math.Round((tmp1 - 0) * float64((1<<(4-1))-1)))
+					myOut2 := int16(math.Round((tmp2 - 0) * float64((1<<(4-1))-1)))
+					output = append(output, byte((myOut1>>4)|myOut2&0xF))
 				}
 				continue
 			}
-            for _, sample := range WaveOutput {
-				var tmp float64;
-				
+			for _, sample := range WaveOutput {
+				var tmp float64
+
 				if (SynthContext.WaveHei & 0x0001) == 1 {
 					tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
 				} else {
@@ -2047,37 +2038,37 @@ func SaveRaw(macro bool, mode int) error {
 				}
 				switch mode {
 				case 0: // Normalized RAW
-				myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
-				output = append(output, byte(myOut))
+					myOut := int16(math.Round((tmp - 0) * float64((1<<(8-1))-1)))
+					output = append(output, byte(myOut))
 				case 1: // Non Normalized
-				output = append(output, byte(sample))
+					output = append(output, byte(sample))
 				}
-				                
-            }
-        }
+
+			}
+		}
 		SynthContext.Macro = tmpMac
 		Synthesize()
-    } else {
-        if(mode == 2) {
+	} else {
+		if mode == 2 {
 			for i := 0; i < len(WaveOutput); i += 2 {
 				var tmp1 float64
 				var tmp2 float64
 				if (SynthContext.WaveHei & 0x0001) == 1 {
 					tmp1 = float64(WaveOutput[i]) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
-					tmp2 = float64(WaveOutput[i + 1]) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
+					tmp2 = float64(WaveOutput[i+1]) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
 				} else {
 					tmp1 = float64(WaveOutput[i]) / (float64(SynthContext.WaveHei) / 2.0)
-					tmp2 = float64(WaveOutput[i + 1]) / (float64(SynthContext.WaveHei) / 2.0)
+					tmp2 = float64(WaveOutput[i+1]) / (float64(SynthContext.WaveHei) / 2.0)
 				}
-				
-				myOut1 := int16(math.Round((tmp1-0)*float64((1<<(4-1))-1)))
-				myOut2 := int16(math.Round((tmp2-0)*float64((1<<(4-1))-1)))
-				output = append(output, byte((myOut1 << 4) | myOut2 & 0xF))
+
+				myOut1 := int16(math.Round((tmp1 - 0) * float64((1<<(4-1))-1)))
+				myOut2 := int16(math.Round((tmp2 - 0) * float64((1<<(4-1))-1)))
+				output = append(output, byte((myOut1<<4)|myOut2&0xF))
 			}
 		}
 		for _, sample := range WaveOutput {
-			var tmp float64;
-			
+			var tmp float64
+
 			if (SynthContext.WaveHei & 0x0001) == 1 {
 				tmp = float64(sample) / ((float64(SynthContext.WaveHei) / 2.0) + 0.5)
 			} else {
@@ -2085,18 +2076,17 @@ func SaveRaw(macro bool, mode int) error {
 			}
 			switch mode {
 			case 0: // Normalized RAW
-			myOut := int16(math.Round((tmp-0)*float64((1<<(8-1))-1)))
-			output = append(output, byte(myOut))
+				myOut := int16(math.Round((tmp - 0) * float64((1<<(8-1))-1)))
+				output = append(output, byte(myOut))
 			case 1: // Non Normalized
-			output = append(output, byte(sample))
+				output = append(output, byte(sample))
 			}
-							
+
 		}
-    }
-	
+	}
 
 	_, err2 := file.Write(output)
-	if(err2 != nil) {
+	if err2 != nil {
 		return err2
 	}
 	return nil
@@ -2110,19 +2100,19 @@ func SaveTxt(macro bool) error {
 		zenity.FileFilters{
 			{".txt files", []string{"*.txt"}, false},
 		})
-	if(errZen == zenity.ErrCanceled) {
+	if errZen == zenity.ErrCanceled {
 		return errZen
 	}
 	if !strings.HasSuffix(path, ".txt") {
-        path += ".txt"
-    }
+		path += ".txt"
+	}
 
 	str := ""
 	file, err := os.Create(path)
-	if(err != nil) {
+	if err != nil {
 		return err
 	}
-	if(macro) {
+	if macro {
 		GenerateWaveSeqStr()
 		str = WaveSeqStr
 	} else {
@@ -2130,7 +2120,7 @@ func SaveTxt(macro bool) error {
 		str = WaveStr
 	}
 	_, err2 := file.WriteString(str)
-	if(err2 != nil) {
+	if err2 != nil {
 		return err2
 	}
 	return nil
@@ -2143,26 +2133,47 @@ func SaveFile(macro bool, bits16 bool) {
 		zenity.FileFilters{
 			{".WAV files", []string{"*.wav"}, false},
 		})
-	if(err == zenity.ErrCanceled) {
+	if err == zenity.ErrCanceled {
 		return
 	}
 	if !strings.HasSuffix(path, ".wav") {
-        path += ".wav"
-    }
+		path += ".wav"
+	}
 	createWavNew(path, macro, bits16)
 }
 
 const (
 	toneHz   = 440
 	sampleHz = 48000
-	
 )
+
+var pianoKeys = [97]float64{
+	27.5, 29.14, 30.87, 32.7, 34.65, 36.71, 38.89, 41.2, 43.65, 46.25, 49, 51.91,
+	55, 58.27, 61.74, 65.41, 69.3, 73.42, 77.78, 82.41, 87.31, 92.5, 98, 103.83,
+	110, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185, 196, 207.65,
+	220, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392, 415.3,
+	440, 466.16, 493.88, 523.25, 554.37, 587.33, 622.25, 659.25, 698.46, 739.99, 783.99, 830.61,
+	880, 932.33, 987.77, 1046.5, 1108.73, 1174.66, 1244.51, 1318.51, 1396.91, 1479.98, 1567.98, 1661.22,
+	1760, 1864.66, 1975.53, 2093, 2217.46, 2349.32, 2489.02, 2637.02, 2793.83, 2959.96, 3135.96, 3322.44,
+	3520, 3729.31, 3951.07, 4186.01, 4186.01,
+}
+
+// Create a struct for a piano key with an index, a bool for whether it uses the sequence or not, and a sequence index
+type PianoState struct {
+	Key           int
+	UseSequence   bool
+	SequenceIndex int32
+	Octave        int32
+	IsPressed     bool
+}
+
+var PianState = PianoState{0, false, 0, 4, false}
 
 var phase = 0.0
 
 func phaseAcc(len int) float64 {
 	freqTable := float64(sampleHz) / float64(len)
-	playfreq:= float64(toneHz) / freqTable
+	playfreq := pianoKeys[((PianState.Octave)*12)+int32(PianState.Key)] / freqTable
 	phase = math.Mod((phase + playfreq), float64(len))
 	return math.Mod(phase, float64(len))
 }
@@ -2172,27 +2183,37 @@ func Wavetable(userdata unsafe.Pointer, stream *C.Uint8, length C.int) {
 	n := int(length)
 	hdr := reflect.SliceHeader{Data: uintptr(unsafe.Pointer(stream)), Len: n, Cap: n}
 	buf := *(*[]C.Int16)(unsafe.Pointer(&hdr))
-	
-	for i := 0; i < (n / 2); i ++ {
+
+	for i := 0; i < (n / 2); i++ {
 		sample := float64(0)
 		ind := 0
-		if(!SynthContext.SongPlaying) {
+		if !SynthContext.SongPlaying {
 			buf[i] = (0)
 			continue
 		}
-		if(SynthContext.SongPlaying && len(WaveOutput) > 0 && WaveOutput != nil){
+		if SynthContext.SongPlaying && len(WaveOutput) > 0 && WaveOutput != nil {
 			ind = int(phaseAcc(len(WaveOutput)))
 		}
-		if(SynthContext.SongPlaying && len(WaveOutput) > 0 && WaveOutput != nil) {
-			sample = float64(WaveOutput[ind % len(WaveOutput)])
+		if SynthContext.SongPlaying && len(WaveOutput) > 0 && WaveOutput != nil {
+			sample = float64(WaveOutput[ind%len(WaveOutput)])
 		}
 
 		sample = sample * (255 / float64(SynthContext.WaveHei))
 		s2 := C.Int16(sample) - 128
 		buf[i] = C.Int16((s2) << 4)
 	}
+
+	if PianState.UseSequence && PianState.IsPressed {
+		SynthContext.Macro++
+		if SynthContext.Macro > SynthContext.MacLen {
+			SynthContext.Macro = SynthContext.MacLen - 1
+			PianState.IsPressed = false
+		}
+		Synthesize()
+		g.Update()
+	}
 }
- 
+
 func InitAudio() {
 	if err := sdl.Init(sdl.INIT_AUDIO); err != nil {
 		println(err)

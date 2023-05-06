@@ -74,7 +74,7 @@ func loop() {
 				},
 			),
 			g.Menu("Export").Layout(
-				g.MenuItem("Furnace Wavetable").OnClick(func ()  {
+				g.MenuItem("Furnace Wavetable").OnClick(func() {
 					kurumi.CreateFUW()
 				}),
 				g.Menu("Dn-FamiTracker").Layout(
@@ -147,14 +147,13 @@ func loop() {
 				g.MenuItem("Deflemask DMW").OnClick(func() {
 					openbrowser("https://github.com/tildearrow/furnace/releases/tag/v0.6pre4-hotfix")
 				}),
-				
 			),
 			g.Separator(),
 			g.MenuItem("Load default patch").OnClick(func() {
 				err := zenity.Warning("Are you sure you want to load default patch?\nAll unsaved data will be lost!!",
-				zenity.Modal(), zenity.Title("WARNING!!"), zenity.ExtraButton("Yes, destroy everything!"), zenity.ExtraButton("NOOOOO!!!"))
-				
-				if(err == nil) {
+					zenity.Modal(), zenity.Title("WARNING!!"), zenity.ExtraButton("Yes, destroy everything!"), zenity.ExtraButton("NOOOOO!!!"))
+
+				if err == nil {
 					Context = kurumi.ConstructSynth()
 					kurumi.SynthContext = Context
 					initWaveStr()
@@ -202,6 +201,113 @@ func loop() {
 		),
 	)
 
+	g.Window("Piano").Pos(340, 780).Flags(g.WindowFlagsAlwaysAutoResize|g.WindowFlagsNoResize).Layout(
+		g.Checkbox("Use Sequence", &kurumi.PianState.UseSequence),
+		g.Row(
+			g.SliderInt(&kurumi.PianState.Octave, 0, 7),
+			g.Tooltip("Changes the octave of the notes"),
+			g.Label("Octave"),
+		),
+		g.Row(
+			g.Button("A").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 0
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("As").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 1
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("B").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 2
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("C").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 3
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("Cs").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 4
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("D").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 5
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("Ds").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 6
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("E").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 7
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("F").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 8
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("Fs").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 9
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("G").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 10
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+			g.Button("Gs").Size(30, 40).OnClick(func() {
+				kurumi.PianState.Key = 11
+				kurumi.PianState.IsPressed = true
+				if kurumi.PianState.UseSequence {
+					kurumi.SynthContext.Macro = 0
+					kurumi.Synthesize()
+				}
+			}),
+		),
+	)
+
 	g.Window("Filter").Pos(1000, 30).Layout(
 		g.Checkbox("Enable filter", &Context.FilterEnabled).OnChange(func() {
 			kurumi.Synthesize()
@@ -214,35 +320,33 @@ func loop() {
 				kurumi.GenerateWaveStr()
 			}),
 			g.Row(
-				g.SliderFloat(&Context.Cutoff, 0, 1).OnChange(func ()  {
+				g.SliderFloat(&Context.Cutoff, 0, 1).OnChange(func() {
 					// filterCutoff = Math.min(sample_rate/2,filterCutoff);calcBiquadFactors();});
-	
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("Cutoff frequency"),
 				g.Label("Cutoff"),
 			),
-	
+
 			g.Row(
-				g.SliderInt(&Context.Pitch, 0, 96).OnChange(func ()  {
+				g.SliderInt(&Context.Pitch, 0, 96).OnChange(func() {
 					// filterCutoff = Math.min(sample_rate/2,filterCutoff);
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("Simulates a particular pitch"),
 				g.Label("Pitch"),
-
 			),
-	
+
 			g.Row(
-				g.SliderFloat(&Context.Resonance, 0.25, 4).OnChange(func ()  {
+				g.SliderFloat(&Context.Resonance, 0.25, 4).OnChange(func() {
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("Resonance"),
 				g.Label("Q"),
-
 			),
 
 			g.Checkbox("Enable ADSR", &Context.FilterAdsrEnabled).OnChange(func() {
@@ -253,79 +357,72 @@ func loop() {
 
 			g.Style().SetDisabled(!Context.FilterAdsrEnabled).To(
 				g.Row(
-					g.SliderFloat(&Context.FilterStart, 0, 1).OnChange(func ()  {
-						
+					g.SliderFloat(&Context.FilterStart, 0, 1).OnChange(func() {
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Label("Start Cutoff"),
-	
 				),
 				g.Row(
-					g.SliderInt(&Context.FilterAttack, 0, 256).OnChange(func ()  {
-						
+					g.SliderInt(&Context.FilterAttack, 0, 256).OnChange(func() {
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Label("Attack"),
-	
 				),
 				g.Row(
-					g.SliderInt(&Context.FilterDecay, 0, 256).OnChange(func ()  {
-						
+					g.SliderInt(&Context.FilterDecay, 0, 256).OnChange(func() {
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Label("Decay"),
-	
 				),
 				g.Row(
-					g.SliderFloat(&Context.FilterSustain, 0, 1).OnChange(func ()  {
-						
+					g.SliderFloat(&Context.FilterSustain, 0, 1).OnChange(func() {
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Label("Sustain"),
 				),
-	
+
 				g.Label("ADSR :"),
-					g.Style().SetStyle(g.StyleVarFramePadding, 0, 0).To(
-						g.Table().Size(260, 68).Rows(
-							g.TableRow(
-								g.Custom(
-									func() {
-										canvas := g.GetCanvas()
-										pos := g.GetCursorScreenPos()
-										color := color.RGBA{75, 200, 75, 255}
-										color2 := color
-										color2.R = 25
-										color2.G = 255
-										color2.B = 25
-	
-										// For drawing ADSR
-										{
-											//adsr := Context.Operators[opId].Adsr
-											tl := Context.Cutoff
-											// Draw attack
-											canvas.AddLine(pos.Add(image.Pt(0, int(64.0-Context.FilterStart*16))), pos.Add(image.Pt(int(Context.FilterAttack), int(64.0-tl*16))), color, 2)
-											// canvas.AddLine(pos, pos.Add(image.Pt(256, 64)), color, 1)
-											// Draw Decay
-											canvas.AddLine(pos.Add(image.Pt(int(Context.FilterAttack), int(64.0-Context.Cutoff*16))), pos.Add(image.Pt(int(Context.FilterAttack+Context.FilterDecay), int(64.0-Context.FilterSustain*16))), color, 2)
-											// Draw SUStain
-											canvas.AddLine(pos.Add(image.Pt(int(Context.FilterAttack+Context.FilterDecay), int(64.0-Context.FilterSustain*16))), pos.Add(image.Pt(256, int(64.0-Context.FilterSustain*16))), color, 2)
-											return
-										}
-									},
-								),
+				g.Style().SetStyle(g.StyleVarFramePadding, 0, 0).To(
+					g.Table().Size(260, 68).Rows(
+						g.TableRow(
+							g.Custom(
+								func() {
+									canvas := g.GetCanvas()
+									pos := g.GetCursorScreenPos()
+									color := color.RGBA{75, 200, 75, 255}
+									color2 := color
+									color2.R = 25
+									color2.G = 255
+									color2.B = 25
+
+									// For drawing ADSR
+									{
+										//adsr := Context.Operators[opId].Adsr
+										tl := Context.Cutoff
+										// Draw attack
+										canvas.AddLine(pos.Add(image.Pt(0, int(64.0-Context.FilterStart*16))), pos.Add(image.Pt(int(Context.FilterAttack), int(64.0-tl*16))), color, 2)
+										// canvas.AddLine(pos, pos.Add(image.Pt(256, 64)), color, 1)
+										// Draw Decay
+										canvas.AddLine(pos.Add(image.Pt(int(Context.FilterAttack), int(64.0-Context.Cutoff*16))), pos.Add(image.Pt(int(Context.FilterAttack+Context.FilterDecay), int(64.0-Context.FilterSustain*16))), color, 2)
+										// Draw SUStain
+										canvas.AddLine(pos.Add(image.Pt(int(Context.FilterAttack+Context.FilterDecay), int(64.0-Context.FilterSustain*16))), pos.Add(image.Pt(256, int(64.0-Context.FilterSustain*16))), color, 2)
+										return
+									}
+								},
 							),
 						),
 					),
+				),
 			),
-			
-			
 		),
-		
-		
 	)
 
 	// ),
@@ -354,7 +451,7 @@ func loop() {
 						g.Label("OP 1"),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[0][0]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -362,7 +459,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[0][1]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -370,7 +467,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[0][2]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -378,7 +475,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[0][3]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -389,7 +486,7 @@ func loop() {
 						g.Label("OP 2"),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[1][0]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -397,7 +494,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[1][1]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -405,7 +502,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[1][2]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -413,7 +510,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[1][3]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -424,7 +521,7 @@ func loop() {
 						g.Label("OP 3"),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[2][0]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -432,7 +529,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[2][1]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -440,7 +537,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[2][2]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -448,7 +545,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[2][3]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -459,7 +556,7 @@ func loop() {
 						g.Label("OP 4"),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[3][0]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -467,7 +564,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[3][1]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -475,7 +572,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[3][2]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -483,7 +580,7 @@ func loop() {
 						),
 						g.Column(
 							g.Checkbox("", &Context.ModMatrix[3][3]).OnChange(func() {
-								
+
 								kurumi.Synthesize()
 								kurumi.GenerateWaveStr()
 							}),
@@ -499,12 +596,11 @@ func loop() {
 					// println(i)
 					return g.Row(
 						g.SliderFloat(&Context.OpOutputs[i], 0, 4).Size(256).OnChange(func() {
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Label(str),
-
 					)
 				}),
 				// g.Row(
@@ -530,13 +626,13 @@ func loop() {
 					g.Row(
 						g.ImageButtonWithRgba(*algImages[0]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(0)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.ImageButtonWithRgba(*algImages[1]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(1)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -544,13 +640,13 @@ func loop() {
 					g.Row(
 						g.ImageButtonWithRgba(*algImages[2]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(2)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.ImageButtonWithRgba(*algImages[3]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(3)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -558,13 +654,13 @@ func loop() {
 					g.Row(
 						g.ImageButtonWithRgba(*algImages[4]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(4)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.ImageButtonWithRgba(*algImages[5]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(5)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -572,13 +668,13 @@ func loop() {
 					g.Row(
 						g.ImageButtonWithRgba(*algImages[6]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(6)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.ImageButtonWithRgba(*algImages[7]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(7)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -586,13 +682,13 @@ func loop() {
 					g.Row(
 						g.ImageButtonWithRgba(*algImages[8]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(8)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.ImageButtonWithRgba(*algImages[9]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(9)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -600,13 +696,13 @@ func loop() {
 					g.Row(
 						g.ImageButtonWithRgba(*algImages[10]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(10)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.ImageButtonWithRgba(*algImages[11]).Size(128, 64).OnClick(func() {
 							kurumi.ApplyAlg(11)
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -627,8 +723,8 @@ func loop() {
 						pos := g.GetCursorScreenPos()
 						color := color.RGBA{200, 75, 75, 255}
 						wt := kurumi.WaveOutput
-						
-						if(kurumi.SynthContext.WaveLen > 4096) {
+
+						if kurumi.SynthContext.WaveLen > 4096 {
 							step := float64(kurumi.SynthContext.WaveLen) / 512.0
 							len := float64(len(wt))
 							for i := 0.0; i < len; i += step {
@@ -637,7 +733,7 @@ func loop() {
 								sample := int(float64(wt[int(i)])*(255.0/float64(Context.WaveHei)) + (float64(Context.WaveHei)/2)*(255.0/float64(Context.WaveHei)))
 								// sample := -int(math.Round(float64(wt[i]) * 255.0 / float64(Context.WaveHei)))
 								canvas.AddRectFilled(pos.Add(image.Pt(x1, 128)),
-								pos.Add(image.Pt(x2, int((float64(-sample+383))))), color, 0, 0)
+									pos.Add(image.Pt(x2, int((float64(-sample+383))))), color, 0, 0)
 							}
 							return
 						}
@@ -657,23 +753,21 @@ func loop() {
 		).InnerWidth(520),
 		g.Row(
 			g.SliderInt(&Context.WaveLen, 1, 256).Size(512).OnChange(func() {
-				
+
 				kurumi.Synthesize()
 				kurumi.GenerateWaveStr()
 			}),
 			g.Tooltip("Changes length of wavetable"),
 			g.Label("Length"),
-
 		),
 		g.Row(
 			g.SliderInt(&Context.WaveHei, 1, 255).Size(512).OnChange(func() {
-				
+
 				kurumi.Synthesize()
 				kurumi.GenerateWaveStr()
 			}),
 			g.Tooltip("Changes height of wavetable"),
 			g.Label("Height"),
-
 		),
 	)
 
@@ -707,54 +801,49 @@ func loop() {
 			g.Style().SetDisabled(Context.Normalize).To(
 				g.Row(
 					g.SliderFloat(&Context.Gain, 0, 4).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Tooltip("Amplifies the output"),
 					g.Label("Gain"),
-	
 				),
 			),
 			g.Row(
 				g.SliderInt(&Context.SmoothWin, 0, 128).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("Smoothes the output"),
 				g.Label("Avg. Filter Win."),
-
 			),
 			g.Row(
 				g.SliderInt(&Context.MacLen, 1, 256).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("How many frames the sequence has"),
 				g.Label("Seq. Lenght"),
-
 			),
 			g.Row(
 				g.SliderInt(&Context.Macro, 0, Context.MacLen-1).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("The current sequence frame"),
 				g.Label("Wav. Seq. Index"),
-
 			),
 			g.Row(
 				g.SliderInt(&Context.Oversample, 1, 32).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("Changes the oversample.\nOversample of 2x means everything is processed 2 times longer than the wavetable size,\nthen downsampled to its original size."),
 				g.Label("Oversample"),
-
 			),
 			g.Label("Wave output :"),
 			g.Row(
@@ -814,7 +903,7 @@ func buildOperator(a int) *g.TabItemWidget {
 				g.Row(
 					g.Label("Mod. Mode"),
 					g.Combo("", kurumi.ModModes[Context.Operators[opId].ModMode], kurumi.ModModes, &Context.Operators[opId].ModMode).Size(128).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
@@ -824,49 +913,45 @@ func buildOperator(a int) *g.TabItemWidget {
 
 				g.Row(
 					g.SliderFloat(&Context.Operators[opId].Tl, 0, 4).Size(256).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Tooltip("Changes Mod. Depth / Volume"),
 					g.Label("Mod. Depth"),
-
 				),
 				g.Row(
 					g.SliderFloat(&Context.Operators[opId].Feedback, 0, 4).Size(256).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Tooltip("Changes the Feedback of operator"),
 					g.Label("Feedback"),
-
 				),
 				g.Row(
 					g.SliderInt(&Context.Operators[opId].Mult, 0, 32).Size(256).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Tooltip("Changes the frequency multiplier"),
 					g.Label("Mult"),
-
 				),
 				g.Row(
 					g.SliderFloat(&Context.Operators[opId].Phase, 0, 1).Size(256).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Tooltip("Changes the phase of the waveform"),
 					g.Label("Phase"),
-
 				),
 
 				g.Row(g.Label("")),
 
 				g.Checkbox("Use envelope on volume", &Context.Operators[opId].IsEnvelopeEnabled).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
@@ -875,7 +960,7 @@ func buildOperator(a int) *g.TabItemWidget {
 				g.Style().SetDisabled(!Context.Operators[opId].IsEnvelopeEnabled).To(
 					g.Row(
 						g.Checkbox("Use custom volume envelope instead of ADSR", &Context.Operators[opId].UseCustomVolEnv).OnChange(func() {
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -885,36 +970,32 @@ func buildOperator(a int) *g.TabItemWidget {
 						g.Column(
 							g.Row(
 								g.SliderInt(&Context.Operators[opId].Adsr.Attack, 0, 256).Size(256).OnChange(func() {
-									
+
 									kurumi.Synthesize()
 									kurumi.GenerateWaveStr()
 								}),
 								g.Label("Attack"),
-	
 							),
 							g.Row(
 								g.SliderInt(&Context.Operators[opId].Adsr.Decay, 0, 256).Size(256).OnChange(func() {
-									
+
 									kurumi.Synthesize()
 									kurumi.GenerateWaveStr()
 								}),
 								g.Label("Decay"),
-	
 							),
 							g.Row(
 								g.SliderFloat(&Context.Operators[opId].Adsr.Sustain, 0, 4).Size(256).OnChange(func() {
-									
+
 									kurumi.Synthesize()
 									kurumi.GenerateWaveStr()
 								}),
 								g.Label("Sustain"),
-	
 							),
 						),
 					),
 				),
 
-				
 				g.Row(g.Label("")),
 				// g.Row(
 				// 	g.Checkbox("Phase modulation", &Context.Operators[opId].PhaseMod).OnChange(func() {
@@ -926,13 +1007,12 @@ func buildOperator(a int) *g.TabItemWidget {
 				g.Column(
 					g.Row(
 						g.SliderInt(&Context.Operators[opId].Detune, -32, 32).Size(256).OnChange(func() {
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Tooltip("If not zero, the phase will change according to sequence"),
 						g.Label("Detune"),
-
 					),
 					// g.Row(
 					// 	g.Checkbox("Reverse phase", &Context.Operators[opId].PhaseRev).OnChange(func() {
@@ -943,7 +1023,7 @@ func buildOperator(a int) *g.TabItemWidget {
 					// ),
 					g.Row(
 						g.Checkbox("Use custom phase envelope", &Context.Operators[opId].CustomPhaseEnv).OnChange(func() {
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -952,7 +1032,7 @@ func buildOperator(a int) *g.TabItemWidget {
 				),
 				g.Row(g.Label("")),
 				g.Checkbox("Enable wavetable morphing", &Context.Operators[opId].Morphing).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
@@ -960,29 +1040,27 @@ func buildOperator(a int) *g.TabItemWidget {
 				g.Style().SetDisabled(!Context.Operators[opId].Morphing).To(
 					g.Row(
 						g.SliderInt(&Context.Operators[opId].MorphTime, 1, 256).Size(256).OnChange(func() {
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Tooltip("How long the morphing takes"),
 						g.Label("Morph Time"),
-
 					),
 				),
 
 				g.Row(
-					g.SliderFloat(&Context.Operators[opId].DutyCycle, 0, 1).Size(256).OnChange(func ()  {
-						
+					g.SliderFloat(&Context.Operators[opId].DutyCycle, 0, 1).Size(256).OnChange(func() {
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Tooltip("Changes the duty cycle of the Pulse waveform.\nDefault is 0.5 (50%)"),
 					g.Label("Duty Cycle"),
-	
 				),
 
 				g.Checkbox("Enable PWM ADSR", &Context.Operators[opId].PwmAdsrEnabled).OnChange(func() {
-					
+
 					kurumi.Synthesize()
 					kurumi.GenerateWaveStr()
 				}),
@@ -990,43 +1068,38 @@ func buildOperator(a int) *g.TabItemWidget {
 
 				g.Style().SetDisabled(!Context.Operators[opId].PwmAdsrEnabled).To(
 					g.Row(
-						g.SliderFloat(&Context.Operators[opId].PwmAdsr.Start, 0, 1).Size(256).OnChange(func ()  {
-							
+						g.SliderFloat(&Context.Operators[opId].PwmAdsr.Start, 0, 1).Size(256).OnChange(func() {
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Label("Start Duty"),
-		
 					),
 					g.Row(
-						g.SliderInt(&Context.Operators[opId].PwmAdsr.Attack, 0, 256).Size(256).OnChange(func ()  {
-							
+						g.SliderInt(&Context.Operators[opId].PwmAdsr.Attack, 0, 256).Size(256).OnChange(func() {
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Label("Attack"),
-		
 					),
 					g.Row(
-						g.SliderInt(&Context.Operators[opId].PwmAdsr.Decay, 0, 256).Size(256).OnChange(func ()  {
-							
+						g.SliderInt(&Context.Operators[opId].PwmAdsr.Decay, 0, 256).Size(256).OnChange(func() {
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Label("Decay"),
-		
 					),
 					g.Row(
-						g.SliderFloat(&Context.Operators[opId].PwmAdsr.Sustain, 0, 1).Size(256).OnChange(func ()  {
-							
+						g.SliderFloat(&Context.Operators[opId].PwmAdsr.Sustain, 0, 1).Size(256).OnChange(func() {
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
 						g.Label("Final Duty"),
 					),
 				),
-
-				
 			),
 			g.Column(
 
@@ -1037,15 +1110,15 @@ func buildOperator(a int) *g.TabItemWidget {
 					// 	combo = combo
 					// }),
 					g.Combo("", kurumi.Waveforms[Context.Operators[opId].WaveformId], kurumi.Waveforms, &Context.Operators[opId].WaveformId).Size(170).OnChange(func() {
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 				),
 				g.Checkbox("Reverse waveform", &Context.Operators[opId].Reverse).OnChange(func() {
-					
-						kurumi.Synthesize()
-						kurumi.GenerateWaveStr()
+
+					kurumi.Synthesize()
+					kurumi.GenerateWaveStr()
 				}),
 				g.Tooltip("Flip down the waveform"),
 
@@ -1058,7 +1131,7 @@ func buildOperator(a int) *g.TabItemWidget {
 								color := color.RGBA{75, 75, 255, 255}
 								for i := 0; i < 256; i++ {
 									y := 0.0
-									if(Context.Operators[opId].Reverse) {
+									if Context.Operators[opId].Reverse {
 										y = -kurumi.WaveFuncs[Context.Operators[opId].WaveformId](&Context.Operators[opId], float64(i)/256.0)*-32 + 1
 
 									} else {
@@ -1077,7 +1150,7 @@ func buildOperator(a int) *g.TabItemWidget {
 					g.Row(
 						g.Label("Interpolation :"),
 						g.Combo("", kurumi.Interpolations[Context.Operators[opId].Interpolation], kurumi.Interpolations, &Context.Operators[opId].Interpolation).Size(160).OnChange(func() {
-							
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -1085,15 +1158,15 @@ func buildOperator(a int) *g.TabItemWidget {
 					g.InputText(&waveStrs[opId]).Size(256).OnChange(func() {
 						// println(waveStrs[opId])
 						kurumi.ApplyStringToWaveform(opId, waveStrs[opId], kurumi.DestWave)
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 					g.Style().SetDisabled(!Context.Operators[opId].Morphing).To(
 						g.Label("Waveform to morph to :"),
 						g.InputText(&morphStrs[opId]).Size(256).OnChange(func() {
-						kurumi.ApplyStringToWaveform(opId, envStrs[opId], kurumi.DestMorph)
-							
+							kurumi.ApplyStringToWaveform(opId, envStrs[opId], kurumi.DestMorph)
+
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
 						}),
@@ -1114,7 +1187,7 @@ func buildOperator(a int) *g.TabItemWidget {
 										color2.R = 25
 										color2.G = 255
 										color2.B = 25
-	
+
 										// For drawing ADSR
 										if !Context.Operators[opId].UseCustomVolEnv {
 											adsr := Context.Operators[opId].Adsr
@@ -1145,12 +1218,10 @@ func buildOperator(a int) *g.TabItemWidget {
 					),
 				),
 
-				
-
 				g.Style().SetDisabled(!Context.Operators[opId].UseCustomVolEnv).To(
 					g.InputText(&envStrs[opId]).Size(256).OnChange(func() {
 						kurumi.ApplyStringToWaveform(opId, envStrs[opId], kurumi.DestVolEnv)
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
@@ -1189,12 +1260,11 @@ func buildOperator(a int) *g.TabItemWidget {
 					),
 					g.InputText(&phaseStrs[opId]).Size(256).OnChange(func() {
 						kurumi.ApplyStringToWaveform(opId, phaseStrs[opId], kurumi.DestPhaseEnv)
-						
+
 						kurumi.Synthesize()
 						kurumi.GenerateWaveStr()
 					}),
 				),
-
 
 				g.Style().SetDisabled(!Context.Operators[opId].PwmAdsrEnabled).To(
 					g.Label("PWM envelope :"),
@@ -1212,7 +1282,7 @@ func buildOperator(a int) *g.TabItemWidget {
 										color2.B = 25
 
 										pwmAdsr := Context.Operators[opId].PwmAdsr
-	
+
 										// For drawing ADSR
 										{
 											//adsr := Context.Operators[opId].Adsr
@@ -1305,18 +1375,19 @@ func openbrowser(url string) {
 	}
 
 }
+
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
 	flag.Parse()
-    if *cpuprofile != "" {
-        f, err := os.Create(*cpuprofile)
-        if err != nil {
-            log.Fatal(err)
-        }
-        pprof.StartCPUProfile(f)
-        defer pprof.StopCPUProfile()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
-	
 
 	// var len = 512
 	// for i := 0; i < len; i++ {
@@ -1333,7 +1404,7 @@ func main() {
 	myIconImg, _ := LoadImage(myIconF)
 	println(rs.GetTitle())
 
-	wnd := g.NewMasterWindow("Kurumi 3 ~ "+rs.GetTitle(), 1280, 720, 0)
+	wnd := g.NewMasterWindow("Kurumi 3 ~ "+rs.GetTitle(), 1280, 900, 0)
 	wnd.SetIcon([]image.Image{myIconImg})
 	// Load algorithms pictures
 	for i := 0; i < 12; i++ {
