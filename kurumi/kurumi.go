@@ -937,7 +937,184 @@ func Normalize(wavetable []float64) []float64 {
 	return wavetable
 }
 
+func notetofreq(n float64) float64 {
+	return 440 * math.Pow(2, (n-69)/12)
+}
+
+type biquadFilter struct {
+	order                     int
+	a0, a1, a2, b1, b2        float64 // Factors
+	filterCutoff, Q, peakGain float64 // Cutoff, Q, and peak gain
+	z1, z2                    float64 // poles
+	A, w0, w1, w2, d1, d2     []float64
+	ep                        float64
+}
+
+func buildBQFilter(cutoff float64) *biquadFilter {
+	filter := new(biquadFilter)
+	filter.order = 4
+	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
+	var norm float64
+	K := math.Tan(math.Pi * cutoff / sampleRate)
+	switch SynthContext.FilterType {
+	case 0: // LPF BQ
+		if SynthContext.Resonance == 0 {
+			norm = 0
+		} else {
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
+		}
+		filter.a0 = K * K * norm
+		filter.a1 = 2 * filter.a0
+		filter.a2 = filter.a0
+		filter.b1 = 2 * (K*K - 1) * norm
+		if SynthContext.Resonance == 0 {
+			filter.b2 = 0
+		} else {
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
+		}
+	case 1: // HPF BQ
+		if SynthContext.Resonance == 0 {
+			norm = 0
+		} else {
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
+		}
+		filter.a0 = 1 * norm
+		filter.a1 = -2 * filter.a0
+		filter.a2 = filter.a0
+		filter.b1 = 2 * (K*K - 1) * norm
+		if SynthContext.Resonance == 0 {
+			filter.b2 = 0
+		} else {
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
+		}
+	case 2: // BPF BQ
+		if SynthContext.Resonance == 0 {
+			norm = 0
+		} else {
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
+		}
+		filter.a0 = K / float64(SynthContext.Resonance) * norm
+		filter.a1 = 0
+		filter.a2 = -filter.a0
+		filter.b1 = 2 * (K*K - 1) * norm
+		if SynthContext.Resonance == 0 {
+			filter.b2 = 0
+		} else {
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
+		}
+	case 3: // BSF BQ
+		if SynthContext.Resonance == 0 {
+			norm = 0
+		} else {
+			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
+		}
+		filter.a0 = (1 + K*K) * norm
+		filter.a1 = 2 * (K*K - 1) * norm
+		filter.a2 = filter.a0
+		filter.b1 = filter.a1
+		if SynthContext.Resonance == 0 {
+			filter.b2 = 0
+		} else {
+			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
+		}
+	case 4: // AP BQ
+		aa := (K - 1.0) / (K + 1.0)
+		bb := -math.Cos(math.Pi * cutoff / sampleRate)
+		filter.a0 = -aa
+		filter.a1 = bb * (1.0 - aa)
+		filter.a2 = 1.0
+		filter.b1 = filter.a1
+		filter.b2 = filter.a0
+	}
+	return filter
+}
+
+const preWarm = 8
+
+func (bqFilter *biquadFilter) processBQFilter(x float64) float64 {
+	output := x*bqFilter.a0 + bqFilter.z1
+	bqFilter.z1 = x*bqFilter.a1 + bqFilter.z2 - bqFilter.b1*output
+	bqFilter.z2 = x*bqFilter.a2 - bqFilter.b2*output
+	return output
+}
+
+func filter(wavetable []float64) []float64 {
+	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
+
+	myCutoff := float64(SynthContext.Cutoff)
+	if SynthContext.FilterAdsrEnabled {
+		myCutoff = adsrFilter()
+	}
+
+	filterCutoff := 5 * math.Pow(10, float64(myCutoff)*3)
+	filterCutoff = math.Min(sampleRate/2, filterCutoff)
+
+	filter := buildBQFilter(filterCutoff)
+	outWave := make([]float64, len(wavetable))
+	for i := 0; i < len(wavetable)*preWarm; i++ {
+		filter.processBQFilter(wavetable[i%len(wavetable)])
+	}
+	for i := 0; i < len(wavetable); i++ {
+		outWave[i] = filter.processBQFilter(wavetable[i%len(wavetable)])
+	}
+	return outWave
+}
+
+var FilterTypes = []string{
+	"Biquad Lowpass",
+	"Biquad Highpass",
+	"Biquad Bandpass",
+	"Biquad Bandstop",
+	"Biquad Allpass",
+}
+
 func Synthesize() {
+	ResetFB()
+	WaveOutput = make([]int, 0)
+	myLen := int(SynthContext.WaveLen)
+	oversample := int(SynthContext.Oversample)
+	myTmp := make([]float64, myLen*oversample)
+	// Preheat
+	for x := 0; x < int(myLen*oversample); x++ {
+		myTmp[x] = (fm(float64(x)))
+	}
+	for x := 0; x < int(myLen*oversample); x++ {
+		myTmp[x] = (fm(float64(x)))
+	}
+	if SynthContext.FilterEnabled {
+		myTmp = filter(myTmp)
+	}
+
+	myTmp = smooth(myTmp)
+
+	myOutFloat := make([]float64, SynthContext.WaveLen)
+	myOut := make([]int, SynthContext.WaveLen)
+	tmpLen := len(myTmp)
+
+	for c := 0; c < tmpLen; c += oversample {
+		res := 0.0
+		for i := 0; i < oversample; i++ {
+			res += myTmp[c+i]
+		}
+		res = res / float64(oversample)
+		myOutFloat[c/oversample] = res
+	}
+
+	if SynthContext.Normalize {
+		myOutFloat = Normalize(myOutFloat)
+		for c := 0; c < len(myOutFloat); c++ {
+			myOut[c] = int(math.Round((myOutFloat[c] + 1) * (float64(SynthContext.WaveHei) / 2.0)))
+		}
+	} else {
+		for c := 0; c < len(myOutFloat); c++ {
+			myOut[c] = int(ClampF64(0, math.Round((myOutFloat[c]+1)*(float64(SynthContext.WaveHei)/2.0)), float64(SynthContext.WaveHei)))
+		}
+	}
+
+	WaveOutput = myOut
+}
+
+func SynthesizeOld() {
 	ResetFB()
 	WaveOutput = make([]int, 0)
 	myLen := int(SynthContext.WaveLen)
@@ -1421,137 +1598,6 @@ func lowpassFiltering2(cutoffFrequency float64, resonance float64, sampleRate fl
 	}
 
 	return output
-}
-
-func notetofreq(n float64) float64 {
-	return 440 * math.Pow(2, (n-69)/12)
-}
-
-type biquadFilter struct {
-	order                     int
-	a0, a1, a2, b1, b2        float64 // Factors
-	filterCutoff, Q, peakGain float64 // Cutoff, Q, and peak gain
-	z1, z2                    float64 // poles
-	A, w0, w1, w2, d1, d2     []float64
-	ep                        float64
-}
-
-func buildBQFilter(cutoff float64) *biquadFilter {
-	filter := new(biquadFilter)
-	filter.order = 4
-	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
-	var norm float64
-	K := math.Tan(math.Pi * cutoff / sampleRate)
-	switch SynthContext.FilterType {
-	case 0: // LPF BQ
-		if SynthContext.Resonance == 0 {
-			norm = 0
-		} else {
-			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
-		}
-		filter.a0 = K * K * norm
-		filter.a1 = 2 * filter.a0
-		filter.a2 = filter.a0
-		filter.b1 = 2 * (K*K - 1) * norm
-		if SynthContext.Resonance == 0 {
-			filter.b2 = 0
-		} else {
-			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
-		}
-	case 1: // HPF BQ
-		if SynthContext.Resonance == 0 {
-			norm = 0
-		} else {
-			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
-		}
-		filter.a0 = 1 * norm
-		filter.a1 = -2 * filter.a0
-		filter.a2 = filter.a0
-		filter.b1 = 2 * (K*K - 1) * norm
-		if SynthContext.Resonance == 0 {
-			filter.b2 = 0
-		} else {
-			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
-		}
-	case 2: // BPF BQ
-		if SynthContext.Resonance == 0 {
-			norm = 0
-		} else {
-			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
-		}
-		filter.a0 = K / float64(SynthContext.Resonance) * norm
-		filter.a1 = 0
-		filter.a2 = -filter.a0
-		filter.b1 = 2 * (K*K - 1) * norm
-		if SynthContext.Resonance == 0 {
-			filter.b2 = 0
-		} else {
-			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
-		}
-	case 3: // BSF BQ
-		if SynthContext.Resonance == 0 {
-			norm = 0
-		} else {
-			norm = 1 / (1 + K/float64(SynthContext.Resonance) + K*K)
-		}
-		filter.a0 = (1 + K*K) * norm
-		filter.a1 = 2 * (K*K - 1) * norm
-		filter.a2 = filter.a0
-		filter.b1 = filter.a1
-		if SynthContext.Resonance == 0 {
-			filter.b2 = 0
-		} else {
-			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
-		}
-	case 4: // AP BQ
-		aa := (K - 1.0) / (K + 1.0)
-		bb := -math.Cos(math.Pi * cutoff / sampleRate)
-		filter.a0 = -aa
-		filter.a1 = bb * (1.0 - aa)
-		filter.a2 = 1.0
-		filter.b1 = filter.a1
-		filter.b2 = filter.a0
-	}
-	return filter
-}
-
-const preWarm = 8
-
-func (bqFilter *biquadFilter) processBQFilter(x float64) float64 {
-	output := x*bqFilter.a0 + bqFilter.z1
-	bqFilter.z1 = x*bqFilter.a1 + bqFilter.z2 - bqFilter.b1*output
-	bqFilter.z2 = x*bqFilter.a2 - bqFilter.b2*output
-	return output
-}
-
-func filter(wavetable []float64) []float64 {
-	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
-
-	myCutoff := float64(SynthContext.Cutoff)
-	if SynthContext.FilterAdsrEnabled {
-		myCutoff = adsrFilter()
-	}
-
-	filterCutoff := 5 * math.Pow(10, float64(myCutoff)*3)
-	filterCutoff = math.Min(sampleRate/2, filterCutoff)
-
-	filter := buildBQFilter(filterCutoff)
-	outWave := make([]float64, len(wavetable))
-	for i := 0; i < len(wavetable)*preWarm; i++ {
-		filter.processBQFilter(wavetable[i%len(wavetable)])
-	}
-	for i := 0; i < len(wavetable); i++ {
-		outWave[i] = filter.processBQFilter(wavetable[i%len(wavetable)])
-	}
-	return outWave
-}
-
-var FilterTypes = []string{
-	"Biquad Lowpass",
-	"Biquad Highpass",
-	"Biquad Bandpass",
-	"Biquad Bandstop",
-	"Biquad Allpass",
 }
 
 func CreateFTIN163(macro bool) error {

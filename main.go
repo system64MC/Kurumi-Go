@@ -182,7 +182,7 @@ func loop() {
 	// )
 	// }
 
-	g.Window("Operators").Pos(340, 370).Size(650, 400).Flags(g.WindowFlagsNoCollapse | g.WindowFlagsNoResize).Layout(
+	g.Window("Operators").Pos(340, 370).Size(650, 400).Flags(g.WindowFlagsNoCollapse).Layout(
 		g.TabBar().TabItems(
 			// g.TabItem("EEE").Layout(
 			// 	g.Combo("", kurumi.Waveforms[Context.Operators[0].WaveformId], kurumi.Waveforms, &Context.Operators[0].WaveformId).Size(256),
@@ -1165,7 +1165,7 @@ func buildOperator(a int) *g.TabItemWidget {
 					g.Style().SetDisabled(!Context.Operators[opId].Morphing).To(
 						g.Label("Waveform to morph to :"),
 						g.InputText(&morphStrs[opId]).Size(256).OnChange(func() {
-							kurumi.ApplyStringToWaveform(opId, envStrs[opId], kurumi.DestMorph)
+							kurumi.ApplyStringToWaveform(opId, morphStrs[opId], kurumi.DestMorph)
 
 							kurumi.Synthesize()
 							kurumi.GenerateWaveStr()
