@@ -1,6 +1,6 @@
 # Kurumi - The Wavetable builder as powerful as vampires
 
-What is [Kurumi](https://en.touhouwiki.net/wiki/Kurumi)?
+### What is [Kurumi](https://en.touhouwiki.net/wiki/Kurumi)?
 Kurumi is a tool written in Go that lets you creating wavetables for various wavetable soundchips such as the Namco 163, the Konami SCC, the PC-Engine, etc...
 
 It uses the power of FM Synthesis to produce the waveforms. Turn your Famicom with N163 into a MegaDrive!
