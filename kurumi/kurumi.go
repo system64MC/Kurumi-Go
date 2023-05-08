@@ -84,8 +84,9 @@ type Synth struct {
 	FilterDecay       int32
 	FilterSustain     float32
 
-	SongPlaying bool
-	Normalize   bool
+	SongPlaying          bool
+	Normalize            bool
+	NewNormalizeBehavior bool
 }
 
 func EncodeJson() []byte {
@@ -1069,6 +1070,14 @@ var FilterTypes = []string{
 }
 
 func Synthesize() {
+	if SynthContext.NewNormalizeBehavior {
+		SynthesizeNew()
+		return
+	}
+	SynthesizeOld()
+}
+
+func SynthesizeNew() {
 	ResetFB()
 	WaveOutput = make([]int, 0)
 	myLen := int(SynthContext.WaveLen)

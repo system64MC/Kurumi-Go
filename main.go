@@ -798,6 +798,13 @@ func loop() {
 				kurumi.GenerateWaveStr()
 			}),
 			g.Tooltip("Normalize the waveform"),
+			g.Style().SetDisabled(!Context.Normalize).To(
+				g.Checkbox("Normalize after treatment", &Context.NewNormalizeBehavior).OnChange(func() {
+					kurumi.Synthesize()
+					kurumi.GenerateWaveStr()
+				}),
+				g.Tooltip("Normalize the waveform after treatment instead of before."),
+			),
 			g.Style().SetDisabled(Context.Normalize).To(
 				g.Row(
 					g.SliderFloat(&Context.Gain, 0, 4).OnChange(func() {
