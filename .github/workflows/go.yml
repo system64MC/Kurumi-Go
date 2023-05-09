@@ -23,6 +23,7 @@ jobs:
 
     - name: Build
       run:
+        apt install mingw-w64-x86-64-dev
         CGO_ENABLED=1
         GOOS=windows
         GOARCH=amd64
