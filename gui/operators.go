@@ -116,7 +116,6 @@ func buildOperator(a int) *g.TabItemWidget {
 						g.Column(
 							g.Row(
 								g.SliderInt(&kurumi.SynthContext.Operators[opId].Adsr.Attack, 0, 256).Size(256).OnChange(func() {
-
 									kurumi.Synthesize()
 									kurumi.GenerateWaveStr()
 								}),
