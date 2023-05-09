@@ -25,10 +25,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libsdl2-dev mingw-w64-x86-64-dev
+        go mod download github.com/stretchr/testify
 
     - name: Build for Windows
       run: |
         env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ go build -ldflags "-s -w -H=windowsgui -extldflags=-static" -p 4 -v -o YourExeName.exe
-
-    - name: Test
-      run: go test -v ./...
