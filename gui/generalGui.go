@@ -59,7 +59,6 @@ func Draw() {
 	drawMainMenuBar()
 	drawOperators()
 	drawMatrixWindow()
-	drawOperators()
 	drawWavePreview()
 	drawPiano()
 }
