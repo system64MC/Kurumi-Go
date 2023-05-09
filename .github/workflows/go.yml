@@ -31,7 +31,7 @@ jobs:
       run: |
         wget https://github.com/libsdl-org/SDL/releases/download/release-2.26.5/SDL2-devel-2.26.5-mingw.tar.gz
         tar -xvzf SDL2-devel-2.26.5-mingw.tar.gz
-        cp -r SDL2-2.26.5/x86_64-w64-mingw32 /usr/x86_64-w64-mingw32
+        cp -r SDL2-2.26.5/x86_64-w64-mingw32/* /usr/x86_64-w64-mingw32
 
     - name: Print PATH
       run: echo $PATH
