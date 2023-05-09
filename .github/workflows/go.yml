@@ -26,7 +26,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libsdl2-dev mingw-w64
         go mod download github.com/stretchr/testify
+    
+    - name: Installing SDL2 deps
+      run: |
         wget https://github.com/libsdl-org/SDL/releases/download/release-2.26.5/SDL2-devel-2.26.5-mingw.tar.gz
+        tar -xvzf SDL2-devel-2.26.5-mingw.tar.gz
+        cp -r x86_64-w64-mingw32 /usr
 
     - name: Print PATH
       run: echo $PATH
