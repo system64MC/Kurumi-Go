@@ -158,6 +158,7 @@ func Normalize(wavetable []float64) []float64 {
 }
 
 func Synthesize() {
+	ResetFB()
 	if SynthContext.NewNormalizeBehavior {
 		SynthesizeNew()
 		return
@@ -166,7 +167,6 @@ func Synthesize() {
 }
 
 func SynthesizeNew() {
-	ResetFB()
 	WaveOutput = make([]int, 0)
 	myLen := int(SynthContext.WaveLen)
 	oversample := int(SynthContext.Oversample)
@@ -212,7 +212,6 @@ func SynthesizeNew() {
 }
 
 func SynthesizeOld() {
-	ResetFB()
 	WaveOutput = make([]int, 0)
 	myLen := int(SynthContext.WaveLen)
 	oversample := int(SynthContext.Oversample)

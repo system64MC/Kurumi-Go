@@ -15,14 +15,24 @@ type biquadFilter struct {
 	ep                        float64
 }
 
+type FilterType int
+
+const (
+	LowPass  FilterType = 0
+	HighPass FilterType = 1
+	BandPass FilterType = 2
+	BandStop FilterType = 3
+	AllPass  FilterType = 4
+)
+
 func buildBQFilter(cutoff float64) *biquadFilter {
 	filter := new(biquadFilter)
 	filter.order = 4
 	sampleRate := notetofreq(float64(SynthContext.Pitch)) * float64(SynthContext.WaveLen*SynthContext.Oversample)
 	var norm float64
 	K := math.Tan(math.Pi * cutoff / sampleRate)
-	switch SynthContext.FilterType {
-	case 0: // LPF BQ
+	switch FilterType(SynthContext.FilterType) {
+	case LowPass: // LPF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
@@ -37,7 +47,7 @@ func buildBQFilter(cutoff float64) *biquadFilter {
 		} else {
 			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
-	case 1: // HPF BQ
+	case HighPass: // HPF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
@@ -52,7 +62,7 @@ func buildBQFilter(cutoff float64) *biquadFilter {
 		} else {
 			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
-	case 2: // BPF BQ
+	case BandPass: // BPF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
@@ -67,7 +77,7 @@ func buildBQFilter(cutoff float64) *biquadFilter {
 		} else {
 			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
-	case 3: // BSF BQ
+	case BandStop: // BSF BQ
 		if SynthContext.Resonance == 0 {
 			norm = 0
 		} else {
@@ -82,7 +92,7 @@ func buildBQFilter(cutoff float64) *biquadFilter {
 		} else {
 			filter.b2 = (1 - K/float64(SynthContext.Resonance) + K*K) * norm
 		}
-	case 4: // AP BQ
+	case AllPass: // AP BQ
 		aa := (K - 1.0) / (K + 1.0)
 		bb := -math.Cos(math.Pi * cutoff / sampleRate)
 		filter.a0 = -aa
@@ -131,180 +141,6 @@ var FilterTypes = []string{
 	"Biquad Bandpass",
 	"Biquad Bandstop",
 	"Biquad Allpass",
-}
-
-type LowPassFilter struct {
-	alpha, lastY float64
-}
-
-// Create a new low-pass filter
-func NewLowPassFilter(cutoff, sampleRate float64) *LowPassFilter {
-	dt := 1.0 / sampleRate
-	rc := 1.0 / (2.0 * math.Pi * cutoff)
-	alpha := dt / (rc + dt)
-	return &LowPassFilter{alpha: alpha}
-}
-
-// Filter a sample
-func (f *LowPassFilter) Filter(x float64) float64 {
-	y := f.lastY + f.alpha*(x-f.lastY)
-	f.lastY = y
-	return y
-}
-
-type LowpassFilter struct {
-	sampleRate float64
-	cutoffFreq float64
-	resonance  float64
-	q          float64
-	gain       float64
-	a          []float64
-	b          []float64
-	x          []float64
-	y          []float64
-}
-
-func NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain float64) *LowpassFilter {
-	// Calculate filter coefficients
-	w0 := 2 * math.Pi * cutoffFreq / sampleRate
-	alpha := math.Sin(w0) / (2 * resonance)
-	cosw0 := math.Cos(w0)
-	a0 := 1 + alpha
-	a1 := -2 * cosw0 / a0
-	a2 := (1 - alpha) / a0
-	b0 := (1 - cosw0) / 2 / a0
-	b1 := (1 - cosw0) / a0
-	b2 := (1 - cosw0) / 2 / a0
-
-	return &LowpassFilter{
-		sampleRate: sampleRate,
-		cutoffFreq: cutoffFreq,
-		resonance:  resonance,
-		q:          1 / (2 * resonance),
-		gain:       gain,
-		a:          []float64{-a1, -a2},
-		b:          []float64{b0, b1, b2},
-		x:          make([]float64, 4),
-		y:          make([]float64, 4),
-	}
-}
-
-func (lpf *LowpassFilter) Process(x float64) float64 {
-	// Shift input and output samples
-	lpf.x[3] = lpf.x[2]
-	lpf.x[2] = lpf.x[1]
-	lpf.x[1] = lpf.x[0]
-	lpf.x[0] = x / lpf.gain
-
-	lpf.y[3] = lpf.y[2]
-	lpf.y[2] = lpf.y[1]
-	lpf.y[1] = lpf.y[0]
-
-	// Apply filter
-	lpf.y[0] = (lpf.b[0]*lpf.x[0] + lpf.b[1]*lpf.x[1] + lpf.b[2]*lpf.x[2] -
-		lpf.a[1]*lpf.y[1] - lpf.a[2]*lpf.y[2]) / lpf.a[0]
-
-	lpf.x[3] = lpf.x[2]
-	lpf.x[2] = lpf.x[1]
-	lpf.x[1] = lpf.x[0]
-	lpf.y[3] = lpf.y[2]
-	lpf.y[2] = lpf.y[1]
-	lpf.y[1] = lpf.y[0]
-
-	return lpf.y[0] * lpf.gain
-}
-
-func lowpassFiltering222(cutoffFreq float64, resonance float64, sampleRate float64, input []float64) []float64 {
-	gain := 1.0
-	lpf := NewLowpassFilter(sampleRate, cutoffFreq, resonance, gain)
-	output := make([]float64, len(input))
-
-	for i := 0; i < len(input); i++ {
-		output[i] = lpf.Process(input[i])
-	}
-
-	return output
-}
-
-type ButterworthFilter struct {
-	xn [2]float64
-	yn [2]float64
-	a  [3]float64
-	b  [3]float64
-}
-
-func NewButterworthFilter(cutoff, sampleRate, resonance float64) *ButterworthFilter {
-	bwf := &ButterworthFilter{}
-	omegaC := 2.0 * math.Pi * cutoff / sampleRate
-	if resonance > 0.0 {
-		d := 1.0 / resonance
-		bwf.a[0] = 1.0 + omegaC*d
-		bwf.a[1] = -2.0 * math.Cos(omegaC)
-		bwf.a[2] = 1.0 - omegaC*d
-		bwf.b[0] = (1.0 - math.Cos(omegaC)) / 2.0
-		bwf.b[1] = 1.0 - math.Cos(omegaC)
-		bwf.b[2] = (1.0 - math.Cos(omegaC)) / 2.0
-	} else {
-		bwf.a[0] = 1.0 + 2.0*math.Cos(omegaC) + math.Pow(omegaC, 2.0)
-		bwf.a[1] = -2.0 * (1.0 + math.Pow(omegaC, 2.0))
-		bwf.a[2] = 1.0 - 2.0*math.Cos(omegaC) + math.Pow(omegaC, 2.0)
-		bwf.b[0] = math.Pow(omegaC, 2.0) / bwf.a[0]
-		bwf.b[1] = 2.0 * bwf.b[0]
-		bwf.b[2] = bwf.b[0]
-	}
-	return bwf
-}
-
-func (bwf *ButterworthFilter) Filter(sample float64) float64 {
-	bwf.xn[0], bwf.xn[1] = bwf.xn[1], bwf.xn[0]
-	bwf.xn[1] = sample
-	bwf.yn[0], bwf.yn[1] = bwf.yn[1], bwf.yn[0]
-	bwf.yn[1] = (bwf.b[0]*bwf.xn[1] + bwf.b[1]*bwf.xn[0] + bwf.b[2]*bwf.xn[0] - bwf.a[1]*bwf.yn[0] - bwf.a[2]*bwf.yn[1]) / bwf.a[0]
-	return bwf.yn[1]
-}
-
-// Apply a lowpass filter to the input wavetable and return the filtered wavetable.
-func lowpassFiltering(cutoff float64, resonance float64, pitch float64, wavetable []float64) []float64 {
-	sampleRate := float64(len(wavetable)) / pitch
-	filter := NewButterworthFilter(cutoff, sampleRate, resonance)
-	filtered := make([]float64, len(wavetable))
-	for i := 0; i < len(wavetable); i++ {
-		filtered[i] = filter.Filter(wavetable[i])
-	}
-	for i := 0; i < len(wavetable); i++ {
-		filtered[i] = filter.Filter(wavetable[i])
-	}
-	return filtered
-}
-
-func lowpassFiltering2(cutoffFrequency float64, resonance float64, sampleRate float64, input []float64) []float64 {
-	// Calculate filter coefficients
-	sampleRate = float64(len(input)) * sampleRate
-
-	omegaC := 2.0 * math.Pi * cutoffFrequency / sampleRate
-	s := math.Sin(omegaC)
-	alpha := s / (2.0 * math.Sqrt(2.0))
-	beta := 1.0 - alpha
-
-	// Initialize filter state variables
-	x1 := 0.0
-	x2 := 0.0
-	y1 := 0.0
-	y2 := 0.0
-
-	// Apply filter to input signal
-	output := make([]float64, len(input))
-	for i := range input {
-		x0 := input[i] - resonance*y1
-		y0 := alpha*(x0+x2) + beta*y1 + alpha*y2
-		x2 = x1
-		x1 = x0
-		y2 = y1
-		y1 = y0
-		output[i] = y0
-	}
-
-	return output
 }
 
 func smooth(arr []float64) []float64 {

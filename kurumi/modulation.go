@@ -16,32 +16,45 @@ var ModModes = []string{
 // Buffers used for output in the Matrix
 var samples = make([]float64, 4)
 
+type ModulationMode int
+
+const (
+	fmMod   ModulationMode = 0
+	orMod   ModulationMode = 1
+	xorMod  ModulationMode = 2
+	andMod  ModulationMode = 3
+	nandMod ModulationMode = 4
+	addMod  ModulationMode = 5
+	subMod  ModulationMode = 6
+	mulMod  ModulationMode = 7
+)
+
 func logicMod(x float64, modValue float64, opId int) float64 {
 	op := &SynthContext.Operators[opId]
-	switch op.ModMode {
-	case 0: // FM
+	switch ModulationMode(op.ModMode) {
+	case fmMod: // FM
 		return op.oscillate(x+modValue+op.getFB()) * op.getVolume()
-	case 1: // OR
+	case orMod: // OR
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
 		return (float64(a|b) / 32767.5) - (1 * op.getVolume())
-	case 2: // XOR
+	case xorMod: // XOR
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
 		return (float64(a^b) / 32767.5) - (1 * op.getVolume())
-	case 3: // AND
+	case andMod: // AND
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
 		return (float64(a&b) / 32767.5) - (1 * op.getVolume())
-	case 4: // NAND
+	case nandMod: // NAND
 		a := int(math.Round((modValue + 1) * 32767.5))
 		b := int(math.Round(((op.oscillate(x) * op.getVolume()) + (1 * op.getVolume())) * 32767.5))
 		return float64(^int(a&b))/32767.5 - (1 * op.getVolume())
-	case 5: // ADD
+	case addMod: // ADD
 		return modValue + (op.oscillate(x) * op.getVolume())
-	case 6: // SUB
+	case subMod: // SUB
 		return op.oscillate(x)*op.getVolume() - modValue
-	case 7: // MUL
+	case mulMod: // MUL
 		return modValue * (op.oscillate(x) * op.getVolume())
 	}
 	return op.oscillate(x+modValue+op.getFB()) * op.getVolume()

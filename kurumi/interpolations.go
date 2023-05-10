@@ -63,16 +63,25 @@ func cubicInterpolation(x float64, wt []uint8) float64 {
 	return (a0*mu*mu2 + a1*mu2 + a2*mu + a3)
 }
 
+type Interpolation int
+
+const (
+	nearest Interpolation = 0
+	linear  Interpolation = 1
+	cosine  Interpolation = 2
+	cubic   Interpolation = 3
+)
+
 func interpolate(x float64, op *Operator, wt []uint8) float64 {
 	// wt := op.Wavetable
-	switch op.Interpolation {
-	case 0:
+	switch Interpolation(op.Interpolation) {
+	case nearest:
 		return noInterpolation(x, wt)
-	case 1:
+	case linear:
 		return linearInterpolation(x, wt)
-	case 2:
+	case cosine:
 		return cosineInterpolation(x, wt)
-	case 3:
+	case cubic:
 		return cubicInterpolation(x, wt)
 	}
 	return noInterpolation(x, wt)
